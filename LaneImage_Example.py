@@ -3,7 +3,7 @@ import numpy as np
 import Edge_detection as edge
 import matplotlib.pyplot as plt
 
-img = cv.imread("./Data/Image/Lane/Video-50.png")
+img = cv.imread("Data/Image/Lane/Pista030.png")
 
 hls = cv.cvtColor(img, cv.COLOR_BGR2HLS)
 
@@ -24,10 +24,10 @@ lane_line_markings = cv.bitwise_or(rs_binary, sxbinary.astype(
 
 #Aplicado a regiao de interesse
 roi_points = np.float32([
-    (269, 196),  # Top-left corner
-    (0, 1075),  # Bottom-left corner
-    (1839, 1075),  # Bottom-right corner
-    (1656, 196)  # Top-right corner
+    (100, 292),  # Top-left
+    (0, 1078),  # Bottom-left
+    (1918, 1078),  # Borron-right
+    (1818, 292)  # Top-right
         ])
 def plot_roi(frame=None, plot=False):
     """
@@ -64,8 +64,7 @@ padding = int(0.25 * width)  # padding from side of the image in pixels
 desired_roi_points = np.float32([
     [padding, 0],  # Top-left corner
     [padding, orig_image_size[1]],  # Bottom-left corner
-    [orig_image_size[
-         0] - padding, orig_image_size[1]],  # Bottom-right corner
+    [orig_image_size[0] - padding, orig_image_size[1]],  # Bottom-right corner
     [orig_image_size[0] - padding, 0]  # Top-right corner
 ])
 def perspective_transform(frame=None, plot=False):
@@ -95,6 +94,7 @@ def perspective_transform(frame=None, plot=False):
     (thresh, binary_warped) = cv.threshold(
         warped_frame, 127, 255, cv.THRESH_BINARY)
     warped_frame = binary_warped
+
 
     # Display the perspective transformed (i.e. warped) frame
     if plot == True:
@@ -211,7 +211,6 @@ def get_lane_line_indices_sliding_windows(plot=False,warped_frame=perspective_tr
             leftx_current = np.int32(np.mean(nonzerox[good_left_inds]))
         if len(good_right_inds) > minpix:
             rightx_current = np.int32(np.mean(nonzerox[good_right_inds]))
-            print(good_left_inds , good_right_inds)
 
     # Concatenate the arrays of indices
     left_lane_inds = np.concatenate(left_lane_inds)
@@ -565,9 +564,9 @@ def display_curvature_offset(frame=None, plot=False,left_curvem=calculate_curvat
 #calculate_curvature(print_to_terminal=True)
 #overlay_lane_lines(plot=True)
 #get_lane_line_previous_window(left_fit=get_lane_line_indices_sliding_windows()[0],right_fit=get_lane_line_indices_sliding_windows()[1],plot=True)
-get_lane_line_indices_sliding_windows(plot=True)
+#get_lane_line_indices_sliding_windows(plot=True)
 #calculate_histogram(plot=True) #Na linha 77 trocar por "rs_binary" para testar
-#perspective_transform(plot=True)
+perspective_transform(plot=True)
 #plot_roi(plot=True)
 #cv.imshow("txt",s_binary)
 

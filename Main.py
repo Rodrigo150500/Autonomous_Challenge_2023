@@ -4,7 +4,7 @@ import Edge_detection as edge  # Handles the detection of lane lines
 import matplotlib.pyplot as plt  # Used for plotting and error checking
 
 filename = './Data/Video/Lane/Pista_13.mp4'
-img = 'Data/Image/Lane/Pista030.png'
+img = 'Data/Image/Lane/R10.png'
 
 file_size = (1920,1080)
 scale_ratio = 1
@@ -108,13 +108,69 @@ class Lane:
 
         # Isolando as faixas
         #Aplicando o algoritmo de sobel no canal de luminosidade ao longo dos eixos X e Y
-        _, sxbinary = edge.threshold(hls[:,:,1], thresh=(120,255))
+        _, sxbinary = edge.threshold(hls[:,:,1], thresh=(170,255))
         sxbinary = edge.blur_gaussian(sxbinary, ksize=3)
 
+        #Aplicando o threshold no canal de saturação, pois quanto maior o seu valor mais pura a cor será
+        s_channel = hls[:,:,2] #Captando apenas o canal de saturação
+        _, s_binary = edge.threshold(s_channel,(130,255))
 
-        cv2.imshow('img',sxbinary)
-        cv2.waitKey()
-        cv2.destroyAllWindows()
+        #Aplicando threshold no canal vermelho do frame, isso fará como que faça a captação da cor amarela
+        #também, o branco no BGR é (255,255,255), o amarelo é (0,255,255), então se zerarmos o vermelho conseuimos
+        #o amarelo.
+        _,r_thresh = edge.threshold(frame[:,:,2], thresh=(120,255))
+
+        #As faixas devem ser de cores puras com um alto valor de vermelho
+        #A operação BITWISE AND reduz os pixels que não parecem bons
+        self.rs_binary = cv2.bitwise_and(s_binary, r_thresh)
+
+        #Combinando as possíveis faixas com possíveis bordas das faixas
+        self.lane_line_markings = cv2.bitwise_or(self.rs_binary, sxbinary.astype(np.uint8))
+
+        #cv2.imshow('img',self.lane_line_markings)
+        #cv2.waitKey()
+        #cv2.destroyAllWindows()
+
+    def plot_roi(self, frame = None):
+
+        if frame is None:
+            frame = self.orig_frame.copy()
+
+        #Desenha o trapézio no frame
+        this_image = cv2.polylines(frame, np.int32([
+            self.roi_points]), True, (147,20,255),3)
+
+        #cv2.imshow('img', this_image)
+        #cv2.waitKey()
+        #cv2.destroyAllWindows()
+
+    def perspective_transform(self, frame = None):
+        if frame is None:
+            frame = self.rs_binary  # self.lane_line_markings
+
+            # Calculate the transformation matrix para pegar os pontos para a vista superior
+        self.transformation_matrix = cv2.getPerspectiveTransform(
+            self.roi_points, self.desire_roi_points)
+        # Calculate the inverse transformation matrix para voltar a imagem original
+        self.inv_transformation_matrix = cv2.getPerspectiveTransform(
+            self.desire_roi_points, self.roi_points)
+
+        # Perform the transform using the transformation matrix
+        self.warped_frame = cv2.warpPerspective(
+            frame, self.transformation_matrix, self.orig_image_size, flags=(
+                cv2.INTER_LINEAR))
+
+        # Convert image to binary
+        (thresh, binary_warped) = cv2.threshold(
+            self.warped_frame, 127, 255, cv2.THRESH_BINARY)
+        self.warped_frame = binary_warped
+
+        #cv2.imshow('img', self.warped_frame)
+        #cv2.waitKey()
+        #cv2.destroyAllWindows()
+
+
+
 
 
     def calculate_car_position(self, print_to_terminal):
@@ -126,6 +182,16 @@ class Lane:
         height = self.orig_frame.shape[0]
         bottom_left = self.left_fit[0]*height**2+ self.left_fit[1]*height + self.left_fit[2]
 
-
+#Criando o objeto
 lane_obj = Lane(orig_frame=cv2.imread(img))
+
+#Criando isolando as faixas
 lane_obj.get_line_markings()
+
+#Desenhando o trapézio no frame
+lane_obj.plot_roi()
+
+#Transformando em vista superior
+lane_obj.perspective_transform()
+
+

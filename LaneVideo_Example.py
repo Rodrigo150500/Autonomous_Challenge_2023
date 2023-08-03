@@ -642,11 +642,11 @@ class Lane:
     if frame is None:
       frame = self.rs_binary#self.lane_line_markings
 			
-    # Calculate the transformation matrix
+    # Calculate the transformation matrix para pegar os pontos para a vista superior
     self.transformation_matrix = cv2.getPerspectiveTransform(
       self.roi_points, self.desired_roi_points)
 
-    # Calculate the inverse transformation matrix			
+    # Calculate the inverse transformation matrix para voltar a imagem original
     self.inv_transformation_matrix = cv2.getPerspectiveTransform(
       self.desired_roi_points, self.roi_points)
 
