@@ -4,7 +4,7 @@ import Edge_detection as edge  # Handles the detection of lane lines
 import matplotlib.pyplot as plt  # Used for plotting and error checking
 
 filename = './Data/Video/Lane/Pista_13.mp4'
-img = 'Data/Image/Lane/R10.png'
+img = 'Data/Image/Lane/Pista030.png'
 
 file_size = (1920,1080)
 scale_ratio = 1
@@ -52,10 +52,10 @@ class Lane:
 
         #Os pontos de região de interesse
         self.roi_points = np.float32([
-            (100,292), #Top-left
-            (0,1078), #Bottom-left
-            (1918,1078), #Borron-right
-            (1818,292) #Top-right
+            (100, 292),  # Top-left
+            (0, 1078),  # Bottom-left
+            (1918, 1078),  # Borron-right
+            (1818, 292)  # Top-right
         ])
 
         #Posição desejada através da região de interesse
@@ -151,6 +151,9 @@ class Lane:
             # Calculate the transformation matrix para pegar os pontos para a vista superior
         self.transformation_matrix = cv2.getPerspectiveTransform(
             self.roi_points, self.desire_roi_points)
+        print(self.roi_points)
+        #print(self.desire_roi_points)
+        #print(self.transformation_matrix)
         # Calculate the inverse transformation matrix para voltar a imagem original
         self.inv_transformation_matrix = cv2.getPerspectiveTransform(
             self.desire_roi_points, self.roi_points)
@@ -165,22 +168,8 @@ class Lane:
             self.warped_frame, 127, 255, cv2.THRESH_BINARY)
         self.warped_frame = binary_warped
 
-        #cv2.imshow('img', self.warped_frame)
-        #cv2.waitKey()
-        #cv2.destroyAllWindows()
 
 
-
-
-
-    def calculate_car_position(self, print_to_terminal):
-        #Calculando a posição do carro
-        #Assumindo que a câmera do carro esteja no centro do veículo
-        car_location = self.orig_frame.shape[1]/2
-
-        #Encontrando a coordenada X faixa inferior
-        height = self.orig_frame.shape[0]
-        bottom_left = self.left_fit[0]*height**2+ self.left_fit[1]*height + self.left_fit[2]
 
 #Criando o objeto
 lane_obj = Lane(orig_frame=cv2.imread(img))
@@ -193,5 +182,3 @@ lane_obj.plot_roi()
 
 #Transformando em vista superior
 lane_obj.perspective_transform()
-
-

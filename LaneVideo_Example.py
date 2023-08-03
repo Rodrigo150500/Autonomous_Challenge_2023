@@ -77,8 +77,7 @@ class Lane:
     self.desired_roi_points = np.float32([
       [self.padding, 0], # Top-left corner
       [self.padding, self.orig_image_size[1]], # Bottom-left corner			
-      [self.orig_image_size[
-        0]-self.padding, self.orig_image_size[1]], # Bottom-right corner
+      [self.orig_image_size[0]-self.padding, self.orig_image_size[1]], # Bottom-right corner
       [self.orig_image_size[0]-self.padding, 0] # Top-right corner
     ]) 
 		
@@ -631,7 +630,7 @@ class Lane:
       plt.show()   
 
     return result			
-	
+
   def perspective_transform(self, frame=None, plot=False):
     """
     Perform the perspective transform.
