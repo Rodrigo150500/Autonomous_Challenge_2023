@@ -57,7 +57,7 @@ def plot_roi(frame=None, plot=False):
 orig_image_size = img.shape[::-1][1:]
 width = orig_image_size[0]
 height = orig_image_size[1]
-
+print(orig_image_size)
 padding = int(0.25 * width)  # padding from side of the image in pixels
 desired_roi_points = np.float32([
     [padding, 0],  # Top-left corner
@@ -78,9 +78,8 @@ def perspective_transform(frame=None, plot=False):
     # Calculate the transformation matrix
     transformation_matrix = cv.getPerspectiveTransform(
         roi_points, desired_roi_points)
-    print(roi_points)
 
-    #print(desired_roi_points)
+    print(desired_roi_points)
     #print(transformation_matrix)
     # Calculate the inverse transformation matrix
     inv_transformation_matrix = cv.getPerspectiveTransform(
@@ -566,7 +565,7 @@ def display_curvature_offset(frame=None, plot=False,left_curvem=calculate_curvat
 #get_lane_line_previous_window(left_fit=get_lane_line_indices_sliding_windows()[0],right_fit=get_lane_line_indices_sliding_windows()[1],plot=True)
 #get_lane_line_indices_sliding_windows(plot=True)
 #calculate_histogram(plot=True) #Na linha 77 trocar por "rs_binary" para testar
-perspective_transform(plot=False)
+#perspective_transform(plot=False)
 #plot_roi(plot=True)
 #cv.imshow("txt",s_binary)
 

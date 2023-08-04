@@ -79,7 +79,8 @@ class Lane:
       [self.padding, self.orig_image_size[1]], # Bottom-left corner			
       [self.orig_image_size[0]-self.padding, self.orig_image_size[1]], # Bottom-right corner
       [self.orig_image_size[0]-self.padding, 0] # Top-right corner
-    ]) 
+    ])
+    print(self.orig_image_size)
 		
     # Histogram that shows the white pixel peaks for lane line detection
     self.histogram = None
