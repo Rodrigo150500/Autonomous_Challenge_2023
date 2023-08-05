@@ -110,6 +110,8 @@ class Lane:
         _, sxbinary = edge.threshold(hls[:,:,1], thresh=(150,255))
         sxbinary = edge.blur_gaussian(sxbinary, ksize=3)
 
+        sxbinary = edge.mag_thresh(sxbinary, sobel_kernel=3, thresh=(110, 255))
+
         #Aplicando o threshold no canal de saturação, pois quanto maior o seu valor mais pura a cor será
         s_channel = hls[:,:,2] #Captando apenas o canal de saturação
         _, s_binary = edge.threshold(s_channel,(130,255))
@@ -227,7 +229,7 @@ class Lane:
         no_of_windows = self.no_of_windows
 
         for window in range(no_of_windows):
-            #Identificando os limites de X e Y (direita e esquerda)
+            #Identificando os limites de X (direita e esquerda) e Y (Topo e Inferior)
             win_y_low = self.warped_frame.shape[0] - (window + 1) * window_height #warped_frame[0] = 1080 | 972
             win_y_high = self.warped_frame.shape[0]- window * window_height#1080
             win_xleft_low = leftx_current - margin #399
@@ -239,29 +241,92 @@ class Lane:
             cv2.rectangle(frame_sliding_window, (win_xright_high, win_y_low), (
                 win_xleft_high, win_y_high), (255,255,255), 2)
 
-            #Identificando pixels diferente de 0 em X e Y dentro da janela
+            #Identificando os indices dos pixels diferente de 0 em X e Y dentro da janela
             #As condições são referentes aos quatro cantos da janela
+            #Aqui fala se aquele pixel branco está ou não dentro da janela, armazena True ou False
+            #Depois aplica o filtro nonzero() que pega apenas os indices dos pixels verdadeiros
             good_left_inds = ((nonzeroy >= win_y_low) & (nonzeroy < win_y_high) & (nonzerox >= win_xleft_low)
                               & (nonzerox <= win_xleft_high)).nonzero()[0]
             good_right_inds = ((nonzeroy >= win_y_low) & (nonzeroy < win_y_high) & (nonzerox >= win_xright_low)
                               & (nonzerox <= win_xright_high)).nonzero()[0]
 
+
             #Armazenando os pixels bons dentro da janela em uma lista
             left_lane_inds.append(good_left_inds)
             right_lane_inds.append(good_right_inds)
 
+            #Se encontrar um número de pixels maior que o mínimo recentralizar a posição da próxima janela
+            #Andando com a base (midpoint) do eixo X
+            minpix = self.minpix
+            if(len(good_left_inds) > minpix):
+                leftx_current = int(np.mean(nonzerox[good_left_inds]))
+            if(len(good_right_inds)> minpix):
+                rightx_current = int(np.mean(nonzerox[good_right_inds]))
 
-            print(nonzeroy)
-            print(win_y_low)
-            print((nonzeroy >= win_y_low))
+        #Concatenando os indices da lista
+        #Nesta lista contem todas as posições dos pixels pertencentes a faixa
+        left_lane_inds = np.concatenate(left_lane_inds)
+        right_lane_inds = np.concatenate(right_lane_inds)
+
+        #Extraindo as coordenadas das faixas da esquerda e da direita
+        #A posição da lista é a mesma para os dois, um esta no eixo X e outro no eixo Y
+        leftx = nonzerox[left_lane_inds]
+        lefty = nonzeroy[left_lane_inds]
+        rightx = nonzerox[right_lane_inds]
+        righty = nonzeroy[right_lane_inds]
+
+        #Ajustando as curvas polinomiais de 2°ordem aos pixels
+        left_fit = None
+        right_fit = None
+
+        global prev_leftx
+        global prev_lefty
+        global prev_rightx
+        global prev_righty
+        global prev_left_fit
+        global prev_right_fit
+
+        #Tendo certeza que tenhamos nonzero pixels
+        if len(leftx) == 0 or len(lefty)== 0 or len(rightx) == 0 or len(righty) == 0:
+            leftx = prev_leftx
+            lefty = prev_lefty
+            rightx = prev_rightx
+            righty = prev_righty
+
+        #Adicionando os coeficientes polinomiais
+        left_fit = np.polyfit(lefty, leftx, 2)
+        right_fit = np.polyfit(righty, rightx, 2)
+
+        prev_left_fit.append(left_fit)
+        prev_right_fit.append(right_fit)
+
+        #Calculando a média movel
+        if (len(prev_left_fit) > 10):
+            prev_left_fit.pop(0)
+            prev_right_fit.pop(0)
+            left_fit = sum(prev_left_fit) / len(prev_left_fit)
+            right_fit = sum(prev_right_fit) / len(prev_right_fit)
+
+        self.left_fit = left_fit
+        self.right_fit = right_fit
+
+        prev_leftx = leftx
+        prev_lefty = lefty
+        prev_rightx = rightx
+        prev_righty = righty
 
 
-            print(f"{11*'='} {window} {11*'='}")
-            print(f"Altura das janelas: {win_y_low},{win_y_high}")
-            print(f"Esq e Dir: Esq: {win_xleft_low}, {win_xleft_high}")
-            print(f"Esq e Dir: Dir: {win_xright_low}, {win_xright_high}")
-            print("*-"*20)
+        return self.left_fit, self.right_fit
 
+
+
+        '''
+        print(f"{20*'='} {window} {20*'='}")
+        print(f"Altura das janelas: {win_y_low},{win_y_high}")
+        print(f"Esq e Dir: Esq: {win_xleft_low}, {win_xleft_high}")
+        print(f"Esq e Dir: Dir: {win_xright_low}, {win_xright_high}")
+        print("*-"*20)
+        '''
 
 
 

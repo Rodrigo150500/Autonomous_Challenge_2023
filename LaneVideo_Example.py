@@ -80,8 +80,8 @@ class Lane:
       [self.orig_image_size[0]-self.padding, self.orig_image_size[1]], # Bottom-right corner
       [self.orig_image_size[0]-self.padding, 0] # Top-right corner
     ])
-    print(self.orig_image_size)
-		
+
+
     # Histogram that shows the white pixel peaks for lane line detection
     self.histogram = None
 		
@@ -432,6 +432,7 @@ class Lane:
     # Concatenate the arrays of indices
     left_lane_inds = np.concatenate(left_lane_inds)
     right_lane_inds = np.concatenate(right_lane_inds)
+    print(left_lane_inds)
 
     # Extract the pixel coordinates for the left and right lane lines
     leftx = nonzerox[left_lane_inds]
@@ -507,7 +508,7 @@ class Lane:
       ax3.imshow(out_img)
       ax3.plot(left_fitx, ploty, color='yellow')
       ax3.plot(right_fitx, ploty, color='yellow')
-      ax1.set_title("Original Frame")  
+      ax1.set_title("Original Frame")
       ax2.set_title("Warped Frame with Sliding Windows")
       ax3.set_title("Detected Lane Lines with Sliding Windows")
       plt.show()  		

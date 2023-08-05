@@ -563,7 +563,7 @@ def display_curvature_offset(frame=None, plot=False,left_curvem=calculate_curvat
 #calculate_curvature(print_to_terminal=True)
 #overlay_lane_lines(plot=True)
 #get_lane_line_previous_window(left_fit=get_lane_line_indices_sliding_windows()[0],right_fit=get_lane_line_indices_sliding_windows()[1],plot=True)
-#get_lane_line_indices_sliding_windows(plot=True)
+get_lane_line_indices_sliding_windows(plot=True)
 #calculate_histogram(plot=True) #Na linha 77 trocar por "rs_binary" para testar
 #perspective_transform(plot=False)
 #plot_roi(plot=True)
