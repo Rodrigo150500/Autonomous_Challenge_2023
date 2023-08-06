@@ -253,7 +253,8 @@ class Lane:
     left_lane_inds = ((nonzerox > (left_fit[0]*(
       nonzeroy**2) + left_fit[1]*nonzeroy + left_fit[2] - margin)) & (
       nonzerox < (left_fit[0]*(
-      nonzeroy**2) + left_fit[1]*nonzeroy + left_fit[2] + margin))) 
+      nonzeroy**2) + left_fit[1]*nonzeroy + left_fit[2] + margin)))
+
     right_lane_inds = ((nonzerox > (right_fit[0]*(
       nonzeroy**2) + right_fit[1]*nonzeroy + right_fit[2] - margin)) & (
       nonzerox < (right_fit[0]*(
@@ -307,10 +308,10 @@ class Lane:
     prev_lefty2 = lefty 
     prev_rightx2 = rightx
     prev_righty2 = righty
-		
+
     # Create the x and y values to plot on the image
     ploty = np.linspace(
-      0, self.warped_frame.shape[0]-1, self.warped_frame.shape[0]) 
+      0, self.warped_frame.shape[0]-1, self.warped_frame.shape[0])
     left_fitx = left_fit[0]*ploty**2 + left_fit[1]*ploty + left_fit[2]
     right_fitx = right_fit[0]*ploty**2 + right_fit[1]*ploty + right_fit[2]
     self.ploty = ploty
@@ -752,7 +753,7 @@ def main():
 	
       # Find lane line pixels using the sliding window method 
       left_fit, right_fit = lane_obj.get_lane_line_indices_sliding_windows(
-        plot=False)
+        plot=True)
 
       # Fill in the lane line
       lane_obj.get_lane_line_previous_window(left_fit, right_fit, plot=False)

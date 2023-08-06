@@ -7,15 +7,16 @@ img = cv.imread("Data/Image/Lane/Pista030.png")
 
 hls = cv.cvtColor(img, cv.COLOR_BGR2HLS)
 #Aplicação de Trashold no canal HLS na iluminação e saturação, também aplicado ao canal vermelho
-_, sxbinary = edge.threshold(hls[:, :, 1], thresh=(120, 255))
-
+_, sxbinary = edge.threshold(hls[:, :, 1], thresh=(150, 255))
 sxbinary = edge.blur_gaussian(sxbinary, ksize=3)  # Reduce noise
 
-sxbinary = edge.mag_thresh(sxbinary, sobel_kernel=3, thresh=(110, 255))
-s_channel = hls[:,:,2]
-_,s_binary = edge.threshold(s_channel,(80,255))
+#sxbinary = edge.mag_thresh(sxbinary, sobel_kernel=3, thresh=(110, 255))
 
-_,r_thresh = edge.threshold(img[:,:,2], thresh=(120,255))
+s_channel = hls[:,:,2]
+_,s_binary = edge.threshold(s_channel,(130,255))
+
+_,r_thresh = edge.threshold(img[:,:,2], thresh=(150,255))
+
 rs_binary = cv.bitwise_and(s_binary,r_thresh)
 lane_line_markings = cv.bitwise_or(rs_binary, sxbinary.astype(
             np.uint8))
@@ -57,7 +58,6 @@ def plot_roi(frame=None, plot=False):
 orig_image_size = img.shape[::-1][1:]
 width = orig_image_size[0]
 height = orig_image_size[1]
-print(orig_image_size)
 padding = int(0.25 * width)  # padding from side of the image in pixels
 desired_roi_points = np.float32([
     [padding, 0],  # Top-left corner
@@ -73,14 +73,12 @@ def perspective_transform(frame=None, plot=False):
     :return: Bird's eye view of the current lane
     """
     if frame is None:
-        frame = rs_binary #lane_line_markings
+        frame =lane_line_markings
 
     # Calculate the transformation matrix
     transformation_matrix = cv.getPerspectiveTransform(
         roi_points, desired_roi_points)
 
-    print(desired_roi_points)
-    #print(transformation_matrix)
     # Calculate the inverse transformation matrix
     inv_transformation_matrix = cv.getPerspectiveTransform(
         desired_roi_points, roi_points)
@@ -95,7 +93,7 @@ def perspective_transform(frame=None, plot=False):
         warped_frame, 127, 255, cv.THRESH_BINARY)
     warped_frame = binary_warped
 
-    # Display the perspective transformed (i.e. warped) frame
+        # Display the perspective transformed (i.e. warped) frame
     if plot == True:
         warped_copy = warped_frame.copy()
         warped_plot = cv.polylines(warped_copy, np.int32([
@@ -112,6 +110,7 @@ def perspective_transform(frame=None, plot=False):
         cv.destroyAllWindows()
 
     return warped_frame
+
 
 
 #Identificando as linhas
@@ -228,9 +227,8 @@ def get_lane_line_indices_sliding_windows(plot=False,warped_frame=perspective_tr
 
     left_fit = left_fit
     right_fit = right_fit
-
     if plot == True:
-        # Create the x and y values to plot on the image
+        # Create the x and yqq values to plot on the image
         ploty = np.linspace(
             0, frame_sliding_window.shape[0] - 1, frame_sliding_window.shape[0])
         left_fitx = left_fit[0] * ploty ** 2 + left_fit[1] * ploty + left_fit[2]
@@ -560,10 +558,10 @@ def display_curvature_offset(frame=None, plot=False,left_curvem=calculate_curvat
 
 #display_curvature_offset(frame=overlay_lane_lines(plot=False), plot=True)
 #calculate_car_position(print_to_terminal=True)
-#calculate_curvature(print_to_terminal=True)
+calculate_curvature(print_to_terminal=True)
 #overlay_lane_lines(plot=True)
 #get_lane_line_previous_window(left_fit=get_lane_line_indices_sliding_windows()[0],right_fit=get_lane_line_indices_sliding_windows()[1],plot=True)
-get_lane_line_indices_sliding_windows(plot=True)
+#get_lane_line_indices_sliding_windows(plot=True)
 #calculate_histogram(plot=True) #Na linha 77 trocar por "rs_binary" para testar
 #perspective_transform(plot=False)
 #plot_roi(plot=True)
