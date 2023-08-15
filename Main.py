@@ -4,7 +4,7 @@ import Edge_detection as edge  # Handles the detection of lane lines
 import matplotlib.pyplot as plt  # Used for plotting and error checking
 
 filename = './Data/Video/Lane/Pista_13.mp4'
-img = 'Data/Image/Lane/Pista310.png'
+img = 'Data/Image/Lane/Pista030.png'
 
 file_size = (1920,1080)
 scale_ratio = 1
@@ -51,12 +51,15 @@ class Lane:
         self.height = height
         #Os pontos de região de interesse
         self.roi_points = np.float32([
-            (100, 292),  # Top-left
-            (0, 1078),  # Bottom-left
-            (1918, 1078),  # Borron-right
-            (1818, 292)  # Top-right
+            (0, 123),  # Top-left
+            (0, 479),  # Bottom-left
+            (639, 479),  # Borron-right
+            (625, 123)  # Top-right
         ])
-
+        #(100, 292),  # Top-left
+        #(0, 1078),  # Bottom-left
+        #(1918, 1078),  # Borron-right
+        #(1818, 292)  # Top-right
         #Posição desejada através da região de interesse
         #Após a transformação de perspectiva a nova imagem terá 600px de largura, com padding de 150
         self.padding = int(0.25*width)
@@ -127,7 +130,7 @@ class Lane:
 
         #Combinando as possíveis faixas com possíveis bordas das faixas
         self.lane_line_markings = cv2.bitwise_or(self.rs_binary, sxbinary.astype(np.uint8))
-        #cv2.imshow('img',self.lane_line_markings)
+        cv2.imshow('img',self.lane_line_markings)
         #cv2.waitKey()
         #cv2.destroyAllWindows()
 
@@ -214,17 +217,15 @@ class Lane:
         nonzero = self.warped_frame.nonzero() #Pega as coordenadas Y e X dos pixels = a 1 (Branco)
         nonzeroy = np.array(nonzero[0]) #Coordenadas em Y
         nonzerox = np.array(nonzero[1]) #Coordenadas em X
-
         #Armazena as coordenadas das faixas da esquerda e da direita
         left_lane_inds = []
         right_lane_inds = []
 
         #Posição atual das coordenadas dos pixel de cada janela
         #que irão continuar atualizando
-        leftx_base, right_base = self.histogram_peak()
+        leftx_base, rightx_base = self.histogram_peak()
         leftx_current = leftx_base
-        rightx_current = right_base
-
+        rightx_current = rightx_base
         no_of_windows = self.no_of_windows
 
         for window in range(no_of_windows):
@@ -245,9 +246,9 @@ class Lane:
             #Aqui fala se aquele pixel branco está ou não dentro da janela, armazena True ou False
             #Depois aplica o filtro nonzero() que pega apenas os indices dos pixels verdadeiros
             good_left_inds = ((nonzeroy >= win_y_low) & (nonzeroy < win_y_high) & (nonzerox >= win_xleft_low)
-                              & (nonzerox <= win_xleft_high)).nonzero()[0]
+                              & (nonzerox < win_xleft_high)).nonzero()[0]
             good_right_inds = ((nonzeroy >= win_y_low) & (nonzeroy < win_y_high) & (nonzerox >= win_xright_low)
-                              & (nonzerox <= win_xright_high)).nonzero()[0]
+                              & (nonzerox < win_xright_high)).nonzero()[0]
 
 
             #Armazenando os pixels bons dentro da janela em uma lista
@@ -266,7 +267,6 @@ class Lane:
         #Nesta lista contem todas as posições dos pixels pertencentes a faixa
         left_lane_inds = np.concatenate(left_lane_inds)
         right_lane_inds = np.concatenate(right_lane_inds)
-
         #Extraindo as coordenadas das faixas da esquerda e da direita
         #A posição da lista é a mesma para os dois, um esta no eixo X e outro no eixo Y
         leftx = nonzerox[left_lane_inds]
@@ -277,7 +277,6 @@ class Lane:
         #Ajustando as curvas polinomiais de 2°ordem aos pixels
         left_fit = None
         right_fit = None
-
 
         global prev_leftx
         global prev_lefty
@@ -292,6 +291,7 @@ class Lane:
             lefty = prev_lefty
             rightx = prev_rightx
             righty = prev_righty
+
 
         #Adicionando os coeficientes polinomiais
         left_fit = np.polyfit(lefty, leftx, 2)
@@ -539,7 +539,6 @@ class Lane:
 
         self.left_curvem = left_curvem
         self.right_curvem = right_curvem
-
         return left_curvem, right_curvem
 
 
@@ -561,7 +560,7 @@ class Lane:
         center_offset = (np.abs(car_location) - np.abs(center_lane))* self.XM_PER_PIX*100
 
         if print_terminal == True:
-            print(str(center_offset) + 'cm')
+            print(f"Centro Offset: {str(center_offset)} cm")
 
         self.center_offset = center_offset
 
@@ -594,6 +593,33 @@ class Lane:
         return image_copy
 
 
+def main():
+    vid = cv2.VideoCapture(0)
+    while True:
+        ret, frame = vid.read()
+        lane_obj = Lane(orig_frame=frame)
+        lane_obj.get_line_markings(frame)
+
+        # Transformando em vista superior
+        lane_obj.perspective_transform()
+
+        # Calculando o histograma
+        lane_obj.calculate_histogram(plot=False)
+
+        # Exemplo da pegagem do histograma
+        lane_obj.histogram_peak()
+
+        left_fit, right_fit = lane_obj.get_lane_line_indices_sliding_windows(plot=False)
+        lane_obj.get_lane_line_previous_window(left_fit, right_fit, plot=False)
+        frame_with_lane_lines = lane_obj.overlay_lane_lines(False)
+
+        lane_obj.calculate_curvature(True)
+        lane_obj.calculate_car_position(print_terminal=True)
+
+        if(cv2.waitKey(1) & 0xFF == ord('q')):
+            break
+main()
+"""
 #Criando o objeto
 lane_obj = Lane(orig_frame=cv2.imread(img))
 
@@ -607,7 +633,7 @@ lane_obj.plot_roi()
 lane_obj.perspective_transform()
 
 #Calculando o histograma
-lane_obj.calculate_histogram(plot=False)
+lane_obj.calculate_histogram(plot=True)
 
 #Exemplo da pegagem do histograma
 lane_obj.histogram_peak()
@@ -629,3 +655,11 @@ lane_obj.calculate_car_position()
 
 #Mostra no display a curvatura e o offset
 lane_obj.display_curvature_offset(frame=frame_with_lane_lines,plot=True)
+"""
+#Testar pegando apenas a base X do histogram peak e elevar a
+#altura
+#      X
+#    /  \
+#   /    \
+#  /      \
+# / ______ \

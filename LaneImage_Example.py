@@ -219,6 +219,7 @@ def get_lane_line_indices_sliding_windows(plot=False,warped_frame=perspective_tr
     lefty = nonzeroy[left_lane_inds]
     rightx = nonzerox[right_lane_inds]
     righty = nonzeroy[right_lane_inds]
+    print(leftx)
 
     # Fit a second order polynomial curve to the pixel coordinates for
     # the left and right lane lines
@@ -227,6 +228,7 @@ def get_lane_line_indices_sliding_windows(plot=False,warped_frame=perspective_tr
 
     left_fit = left_fit
     right_fit = right_fit
+
     if plot == True:
         # Create the x and yqq values to plot on the image
         ploty = np.linspace(
@@ -558,10 +560,10 @@ def display_curvature_offset(frame=None, plot=False,left_curvem=calculate_curvat
 
 #display_curvature_offset(frame=overlay_lane_lines(plot=False), plot=True)
 #calculate_car_position(print_to_terminal=True)
-calculate_curvature(print_to_terminal=True)
+#calculate_curvature(print_to_terminal=False)
 #overlay_lane_lines(plot=True)
 #get_lane_line_previous_window(left_fit=get_lane_line_indices_sliding_windows()[0],right_fit=get_lane_line_indices_sliding_windows()[1],plot=True)
-#get_lane_line_indices_sliding_windows(plot=True)
+get_lane_line_indices_sliding_windows(plot=True)
 #calculate_histogram(plot=True) #Na linha 77 trocar por "rs_binary" para testar
 #perspective_transform(plot=False)
 #plot_roi(plot=True)

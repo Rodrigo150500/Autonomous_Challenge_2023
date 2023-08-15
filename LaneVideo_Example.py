@@ -433,14 +433,12 @@ class Lane:
     # Concatenate the arrays of indices
     left_lane_inds = np.concatenate(left_lane_inds)
     right_lane_inds = np.concatenate(right_lane_inds)
-    print(left_lane_inds)
 
     # Extract the pixel coordinates for the left and right lane lines
     leftx = nonzerox[left_lane_inds]
     lefty = nonzeroy[left_lane_inds] 
     rightx = nonzerox[right_lane_inds] 
     righty = nonzeroy[right_lane_inds]
-
     # Fit a second order polynomial curve to the pixel coordinates for
     # the left and right lane lines
     left_fit = None
@@ -716,7 +714,6 @@ def main():
                            fourcc, 
                            output_frames_per_second, 
                            file_size) 
-	
   # Process the video
   while cap.isOpened():
 
