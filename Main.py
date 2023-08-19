@@ -1,16 +1,9 @@
+import time
+
 import cv2
 import numpy as np  # Import the NumPy scientific computing library
 import Edge_detection as edge  # Handles the detection of lane lines
 import matplotlib.pyplot as plt  # Used for plotting and error checking
-
-filename = './Data/Video/Lane/Pista_13.mp4'
-img = 'Data/Image/Lane/Pista030.png'
-
-file_size = (1920,1080)
-scale_ratio = 1
-output_file = 'Pista-13_Output.mp4'
-output_frames_per_second = 20.0
-imagem = cv2.imread(img)
 
 #Variaveis Globais
 prev_leftx = None
@@ -51,11 +44,23 @@ class Lane:
         self.height = height
         #Os pontos de região de interesse
         self.roi_points = np.float32([
-            (0, 123),  # Top-left
-            (0, 479),  # Bottom-left
-            (639, 479),  # Borron-right
-            (625, 123)  # Top-right
+             (36, 105),  # Top-left
+             (0, 480),  # Bottom-left
+             (640, 480),  # Borron-right
+             (604, 105)  # Top-right
         ])
+        self.center_lane = None
+        #(36, 105),  # Top-left
+        #(0, 480),  # Bottom-left
+        #(640, 480),  # Borron-right
+        #(604, 105)  # Top-right
+        #Camera
+        #(161, 148),  # Top-left
+        #(0, 480),  # Bottom-left
+        #(640, 480),  # Borron-right
+        #(486, 148)  # Top-right
+        ################
+        #Celular
         #(100, 292),  # Top-left
         #(0, 1078),  # Bottom-left
         #(1918, 1078),  # Borron-right
@@ -100,7 +105,7 @@ class Lane:
         self.right_curvem = None
         self.center_offset = None
 
-    def get_line_markings(self, frame = None):
+    def get_line_markings(self, frame = None, plot=False):
 
         if frame is None:
             frame = self.orig_frame
@@ -110,14 +115,14 @@ class Lane:
 
         # Isolando as faixas
         #Aplicando o algoritmo de sobel no canal de luminosidade ao longo dos eixos X e Y
-        _, sxbinary = edge.threshold(hls[:,:,1], thresh=(150,255))
+        _, sxbinary = edge.threshold(hls[:,:,1], thresh=(200,255))
         sxbinary = edge.blur_gaussian(sxbinary, ksize=3)
 
-        #sxbinary = edge.mag_thresh(sxbinary, sobel_kernel=3, thresh=(110, 255))
+        #sxbinary = edge.mag_thresh(sxbinary, sobel_kernel=3, thresh=(80, 255))
 
         #Aplicando o threshold no canal de saturação, pois quanto maior o seu valor mais pura a cor será
         s_channel = hls[:,:,2] #Captando apenas o canal de saturação
-        _, s_binary = edge.threshold(s_channel,(130,255))
+        _, s_binary = edge.threshold(s_channel,(200,255))
 
         #Aplicando threshold no canal vermelho do frame, isso fará como que faça a captação da cor amarela
         #também, o branco no BGR é (255,255,255), o amarelo é (0,255,255), então se zerarmos o vermelho conseuimos
@@ -130,11 +135,12 @@ class Lane:
 
         #Combinando as possíveis faixas com possíveis bordas das faixas
         self.lane_line_markings = cv2.bitwise_or(self.rs_binary, sxbinary.astype(np.uint8))
-        cv2.imshow('img',self.lane_line_markings)
+        if plot == True:
+            cv2.imshow('img',self.lane_line_markings)
         #cv2.waitKey()
         #cv2.destroyAllWindows()
 
-    def plot_roi(self, frame = None):
+    def plot_roi(self, frame = None, plot = False):
 
         if frame is None:
             frame = self.orig_frame.copy()
@@ -143,7 +149,8 @@ class Lane:
         this_image = cv2.polylines(frame, np.int32([
             self.roi_points]), True, (147,20,255),3)
 
-        #cv2.imshow('img', this_image)
+        if plot == True:
+            cv2.imshow('img', this_image)
         #cv2.waitKey()
         #cv2.destroyAllWindows()
 
@@ -167,7 +174,8 @@ class Lane:
         (thresh, binary_warped) = cv2.threshold(
             self.warped_frame, 127, 255, cv2.THRESH_BINARY)
         self.warped_frame = binary_warped
-        #cv2.imshow('img', self.warped_frame)
+        if plot == True:
+            cv2.imshow('img', self.warped_frame)
         #cv2.waitKey()
         #cv2.destroyAllWindows()
         # Display the perspective transformed (i.e. warped) frame
@@ -184,6 +192,7 @@ class Lane:
 
         if plot == True:
             # Draw both the image and the histogram
+
             figure, (ax1, ax2) = plt.subplots(2, 1)  # 2 row, 1 columns
             figure.set_size_inches(10, 5)
             ax1.imshow(frame, cmap='gray')
@@ -199,8 +208,8 @@ class Lane:
         #Retorna a coordenada X da esquerda e direita do histograma
         #Pega os picos da esquerda e direita
         midpoint = int(self.histogram.shape[0]/2)
-        leftx_base = np.argmax(self.histogram[:midpoint])
-        rightx_base = np.argmax(self.histogram[midpoint:]) + midpoint
+        leftx_base = np.argmax(self.histogram[:midpoint]) #Encontra o indice com maior pixel na esquerda no eixo X
+        rightx_base = np.argmax(self.histogram[midpoint:]) + midpoint #Encontra o indice com maior pixel da direita no eixo X
         return (leftx_base, rightx_base)
     def get_lane_line_indices_sliding_windows(self, plot=False):
         #Pegando as faixas da direita e esquerda
@@ -232,6 +241,7 @@ class Lane:
             #Identificando os limites de X (direita e esquerda) e Y (Topo e Inferior)
             win_y_low = self.warped_frame.shape[0] - (window + 1) * window_height #warped_frame[0] = 1080 | 972
             win_y_high = self.warped_frame.shape[0]- window * window_height#1080
+
             win_xleft_low = leftx_current - margin #399
             win_xleft_high = leftx_current + margin #719
             win_xright_low = rightx_current - margin #1236
@@ -248,13 +258,12 @@ class Lane:
             good_left_inds = ((nonzeroy >= win_y_low) & (nonzeroy < win_y_high) & (nonzerox >= win_xleft_low)
                               & (nonzerox < win_xleft_high)).nonzero()[0]
             good_right_inds = ((nonzeroy >= win_y_low) & (nonzeroy < win_y_high) & (nonzerox >= win_xright_low)
-                              & (nonzerox < win_xright_high)).nonzero()[0]
+                               & (nonzerox < win_xright_high)).nonzero()[0]
 
 
             #Armazenando os pixels bons dentro da janela em uma lista
             left_lane_inds.append(good_left_inds)
             right_lane_inds.append(good_right_inds)
-
             #Se encontrar um número de pixels maior que o mínimo recentralizar a posição da próxima janela
             #Andando com a base (midpoint) do eixo X
             minpix = self.minpix
@@ -309,6 +318,10 @@ class Lane:
 
         self.left_fit = left_fit
         self.right_fit = right_fit
+
+
+
+
         prev_leftx = leftx
         prev_lefty = lefty
         prev_rightx = rightx
@@ -394,6 +407,7 @@ class Lane:
         left_fit = np.polyfit(lefty, leftx, 2)
         right_fit = np.polyfit(righty, rightx, 2)
 
+
         # Add the latest polynomial coefficients
         prev_left_fit2.append(left_fit)
         prev_right_fit2.append(right_fit)
@@ -407,7 +421,6 @@ class Lane:
 
         self.left_fit = left_fit
         self.right_fit = right_fit
-
         prev_leftx2 = leftx
         prev_lefty2 = lefty
         prev_rightx2 = rightx
@@ -480,8 +493,8 @@ class Lane:
             ax3.set_title("Warped Frame With Search Window")
             plt.show()
 
-    def overlay_lane_lines(self, plot=False):
 
+    def overlay_lane_lines(self, plot=False):
         #Desenha as linhas sobre a imagem
         #Gera uma imagem para desenhar por cima
         warp_zero = np.zeros_like(self.warped_frame).astype(np.uint8)
@@ -502,8 +515,22 @@ class Lane:
         #Combinando os resultaodos como a imagem original
         result = cv2.addWeighted(self.orig_frame, 1, newwarp, 0.3, 0)
 
+        cv2.putText(result, 'Curve Radius: ' + str((self.left_curvem + self.right_curvem) / 2)[:7] + ' m',
+                    (int((5 / 600) * self.width), int((20 / 338) * self.height)),
+                    cv2.FONT_HERSHEY_SIMPLEX, (float((0.5 / 600) * self.width)), (
+                        255, 255, 255), 2, cv2.LINE_AA)
+        cv2.putText(result, 'Center Offset: ' + str(self.center_offset)[:7] + ' cm',
+                    (int((5 / 600) * self.width), int((40 / 338) * self.height)),
+                    cv2.FONT_HERSHEY_SIMPLEX, (float((0.5 / 600) * self.width)), (
+                        255, 255, 255), 2, cv2.LINE_AA)
+        cv2.line(result,(340,0),(340,480), (255,0,0),2)
+        cv2.circle(result,(340,480),40,(0,255,0),2)
+        cv2.polylines(result, np.int32([
+            self.roi_points]), True, (147, 20, 255), 3)
         if plot == True:
             # Plot the figures
+            cv2.imshow("Janela", cv2.cvtColor(result, cv2.COLOR_BGR2RGB))
+            """
             figure, (ax1, ax2) = plt.subplots(2, 1)  # 2 rows, 1 column
             figure.set_size_inches(10, 10)
             figure.tight_layout(pad=3.0)
@@ -512,6 +539,7 @@ class Lane:
             ax1.set_title("Original Frame")
             ax2.set_title("Original Frame With Lane Overlay")
             plt.show()
+            """
         return result
 
     def calculate_curvature(self, print_terminal = False):
@@ -555,16 +583,18 @@ class Lane:
         bottom_left = self.left_fit[0]**height**2 + self.left_fit[1]*height + self.left_fit[2]
         bottom_right = self.right_fit[0] * height**2 + self.right_fit[1]*height + self.right_fit[2]
 
-        center_lane = (bottom_right - bottom_left)/2 + bottom_left
-
-        center_offset = (np.abs(car_location) - np.abs(center_lane))* self.XM_PER_PIX*100
+        #print(bottom_right, bottom_left)
+        self.center_lane = (bottom_right - bottom_left)/2 + bottom_left
+        center_offset = (np.abs(car_location) - np.abs(self.center_lane))* self.XM_PER_PIX*100
 
         if print_terminal == True:
             print(f"Centro Offset: {str(center_offset)} cm")
 
         self.center_offset = center_offset
-
         return center_offset
+
+
+
 
     def display_curvature_offset(self, frame, plot=False):
 
@@ -594,30 +624,42 @@ class Lane:
 
 
 def main():
-    vid = cv2.VideoCapture(0)
-    while True:
-        ret, frame = vid.read()
-        lane_obj = Lane(orig_frame=frame)
-        lane_obj.get_line_markings(frame)
-
-        # Transformando em vista superior
-        lane_obj.perspective_transform()
-
-        # Calculando o histograma
-        lane_obj.calculate_histogram(plot=False)
-
-        # Exemplo da pegagem do histograma
-        lane_obj.histogram_peak()
-
-        left_fit, right_fit = lane_obj.get_lane_line_indices_sliding_windows(plot=False)
-        lane_obj.get_lane_line_previous_window(left_fit, right_fit, plot=False)
-        frame_with_lane_lines = lane_obj.overlay_lane_lines(False)
-
-        lane_obj.calculate_curvature(True)
-        lane_obj.calculate_car_position(print_terminal=True)
-
-        if(cv2.waitKey(1) & 0xFF == ord('q')):
+    vid = cv2.VideoCapture(1) #640x480
+    vid.set(cv2.CAP_PROP_FRAME_WIDTH, 720)
+    vid.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
+    if vid.isOpened():
+        while True:
+            ret, frame = vid.read()
+            cv2.imshow("Janela", frame)
+            time.sleep(2)
+            cv2.destroyAllWindows()
             break
+        while True:
+            #time.sleep(0.35)
+            ret, frame = vid.read()
+            lane_obj = Lane(orig_frame=frame)
+            lane_obj.get_line_markings(frame,plot=False)
+
+            # Transformando em vista superior
+            lane_obj.perspective_transform(plot=False)
+            #lane_obj.plot_roi(frame, plot=False)
+            # Calculando o histograma
+            lane_obj.calculate_histogram(plot=False)
+
+            # Exemplo da pegagem do histograma
+            #lane_obj.histogram_peak()
+
+            left_fit, right_fit = lane_obj.get_lane_line_indices_sliding_windows(plot=False)
+            lane_obj.get_lane_line_previous_window(left_fit, right_fit, plot=False)
+            #frame_with_lane_lines = lane_obj.overlay_lane_lines(True)
+            lane_obj.plot_roi(frame, False)
+            lane_obj.calculate_curvature(False)
+            lane_obj.calculate_car_position(print_terminal=False)
+            #lane_obj.display_curvature_offset(frame, True)
+            lane_obj.overlay_lane_lines(True)
+
+            if(cv2.waitKey(1) & 0xFF == ord('q')):
+                break
 main()
 """
 #Criando o objeto

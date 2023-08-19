@@ -3,7 +3,7 @@ import numpy as np
 import Edge_detection as edge
 import matplotlib.pyplot as plt
 
-img = cv.imread("Data/Image/Lane/Pista030.png")
+img = cv.imread("Data/Image/Lane/Pista032.png")
 
 hls = cv.cvtColor(img, cv.COLOR_BGR2HLS)
 #Aplicação de Trashold no canal HLS na iluminação e saturação, também aplicado ao canal vermelho
@@ -150,8 +150,7 @@ def get_lane_line_indices_sliding_windows(plot=False,warped_frame=perspective_tr
     :return: Best fit lines for the left and right lines of the current lane
     """
     # Sliding window width is +/- margin - Definição da largura da janela
-    margin = int((1 / 12) * width)
-
+    margin = int((1 / 25) * width)
     # Set the height of the sliding windows - Define a altura da janela
     window_height = np.int32(warped_frame.shape[0] / 10)
     frame_sliding_window = warped_frame.copy()
@@ -183,6 +182,7 @@ def get_lane_line_indices_sliding_windows(plot=False,warped_frame=perspective_tr
 
         win_xleft_low = leftx_current - margin
         win_xleft_high = leftx_current + margin
+
         win_xright_low = rightx_current - margin
         win_xright_high = rightx_current + margin
         cv.rectangle(frame_sliding_window, (win_xleft_low, win_y_low), (
@@ -190,6 +190,9 @@ def get_lane_line_indices_sliding_windows(plot=False,warped_frame=perspective_tr
         cv.rectangle(frame_sliding_window, (win_xright_low, win_y_low), (
             win_xright_high, win_y_high), (255, 255, 255), 10)
 
+        if window == 3:
+            print(((win_xleft_high-margin) + (win_xright_high - margin))/2, (win_y_high))
+            cv.circle(frame_sliding_window,(980,756), 30, (255,0,0),5 )
         # Identify the nonzero pixels in x and y within the window
         good_left_inds = ((nonzeroy >= win_y_low) & (nonzeroy < win_y_high) &
                           (nonzerox >= win_xleft_low) & (
@@ -219,7 +222,6 @@ def get_lane_line_indices_sliding_windows(plot=False,warped_frame=perspective_tr
     lefty = nonzeroy[left_lane_inds]
     rightx = nonzerox[right_lane_inds]
     righty = nonzeroy[right_lane_inds]
-    print(leftx)
 
     # Fit a second order polynomial curve to the pixel coordinates for
     # the left and right lane lines
@@ -231,6 +233,7 @@ def get_lane_line_indices_sliding_windows(plot=False,warped_frame=perspective_tr
 
     if plot == True:
         # Create the x and yqq values to plot on the image
+        cv.line(frame_sliding_window, (960,0),(960,1080),(255,0,0),4)
         ploty = np.linspace(
             0, frame_sliding_window.shape[0] - 1, frame_sliding_window.shape[0])
         left_fitx = left_fit[0] * ploty ** 2 + left_fit[1] * ploty + left_fit[2]
@@ -558,16 +561,18 @@ def display_curvature_offset(frame=None, plot=False,left_curvem=calculate_curvat
     return image_copy
 
 
-#display_curvature_offset(frame=overlay_lane_lines(plot=False), plot=True)
+
+
+#display_curvature_offset(frame=overlay_lane_lines(plot=False), plot=False)
 #calculate_car_position(print_to_terminal=True)
 #calculate_curvature(print_to_terminal=False)
-#overlay_lane_lines(plot=True)
+#overlay_lane_lines(plot=False)
 #get_lane_line_previous_window(left_fit=get_lane_line_indices_sliding_windows()[0],right_fit=get_lane_line_indices_sliding_windows()[1],plot=True)
-get_lane_line_indices_sliding_windows(plot=True)
+#get_lane_line_indices_sliding_windows(plot=True)
 #calculate_histogram(plot=True) #Na linha 77 trocar por "rs_binary" para testar
 #perspective_transform(plot=False)
 #plot_roi(plot=True)
-#cv.imshow("txt",s_binary)
+cv.imshow("txt",img)
 
 #cv.imshow("txt",rs_binary)
 #cv.imshow("txt",img)
