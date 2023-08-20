@@ -107,14 +107,14 @@ class Lane:
 
         # Isolando as faixas
         #Aplicando o algoritmo de sobel no canal de luminosidade ao longo dos eixos X e Y
-        _, sxbinary = edge.threshold(hls[:,:,1], thresh=(130,255))
+        _, sxbinary = edge.threshold(hls[:,:,1], thresh=(200,255))
         sxbinary = edge.blur_gaussian(sxbinary, ksize=3)
 
         #sxbinary = edge.mag_thresh(sxbinary, sobel_kernel=3, thresh=(80, 255))
 
         #Aplicando o threshold no canal de saturação, pois quanto maior o seu valor mais pura a cor será
         s_channel = hls[:,:,2] #Captando apenas o canal de saturação
-        _, s_binary = edge.threshold(s_channel,(130,255))
+        _, s_binary = edge.threshold(s_channel,(200,255))
 
         #Aplicando threshold no canal vermelho do frame, isso fará como que faça a captação da cor amarela
         #também, o branco no BGR é (255,255,255), o amarelo é (0,255,255), então se zerarmos o vermelho conseuimos
@@ -150,7 +150,6 @@ class Lane:
         if frame is None:
             frame = self.lane_line_markings
 
-
         # Calculate the transformation matrix para pegar os pontos para a vista superior
         self.transformation_matrix = cv2.getPerspectiveTransform(
             self.roi_points, self.desire_roi_points)
@@ -158,12 +157,11 @@ class Lane:
         self.inv_transformation_matrix = cv2.getPerspectiveTransform(
             self.desire_roi_points, self.roi_points)
 
-
-
         # Perform the transform using the transformation matrix
         self.warped_frame = cv2.warpPerspective(
             frame, self.transformation_matrix, self.orig_image_size, flags=(
                 cv2.INTER_LINEAR))
+
         # Convert image to binary
         (thresh, binary_warped) = cv2.threshold(
             self.warped_frame, 127, 255, cv2.THRESH_BINARY)
@@ -246,12 +244,8 @@ class Lane:
             cv2.rectangle(frame_sliding_window, (win_xright_low, win_y_low), (
                 win_xright_high, win_y_high), (255, 255, 255), 2)
             if window == 5:
-                #Acha as coordenadas do circulo
-                self.mediax = int(((rightx_current-leftx_current)/2) +
-                                  leftx_current)
+                self.mediax = int(((rightx_current-leftx_current)/2) + leftx_current)
                 self.mediay = int(((win_y_high-win_y_low)/2)+win_y_low)
-
-                #Acha as coordenadas das faixas
                 self.faixaXEsq = int(rightx_current)
                 self.faixaXDir = int(leftx_current)
 
@@ -451,215 +445,19 @@ class Lane:
         self.ploty = ploty
         self.left_fitx = left_fitx
         self.right_fitx = right_fitx
-
-        if plot == True:
-            # Generate images to draw on
-            out_img = np.dstack((self.warped_frame, self.warped_frame, (
-                self.warped_frame))) * 255
-            window_img = np.zeros_like(out_img)
-
-            # Add color to the left and right line pixels
-            out_img[nonzeroy[left_lane_inds], nonzerox[left_lane_inds]] = [255, 0, 0]
-            out_img[nonzeroy[right_lane_inds], nonzerox[right_lane_inds]] = [
-                0, 0, 255]
-            # Create a polygon to show the search window area, and recast
-            # the x and y points into a usable format for cv2.fillPoly()
-            margin = self.margin
-            left_line_window1 = np.array([np.transpose(np.vstack([
-                left_fitx - margin, ploty]))])
-            left_line_window2 = np.array([np.flipud(np.transpose(np.vstack([
-                left_fitx + margin, ploty])))])
-            left_line_pts = np.hstack((left_line_window1, left_line_window2))
-            right_line_window1 = np.array([np.transpose(np.vstack([
-                right_fitx - margin, ploty]))])
-            right_line_window2 = np.array([np.flipud(np.transpose(np.vstack([
-                right_fitx + margin, ploty])))])
-            right_line_pts = np.hstack((right_line_window1, right_line_window2))
-
-            # Draw the lane onto the warped blank image
-            cv2.fillPoly(window_img, np.int_([left_line_pts]), (0, 255, 0))
-            cv2.fillPoly(window_img, np.int_([right_line_pts]), (0, 255, 0))
-            result = cv2.addWeighted(out_img, 1, window_img, 0.3, 0)
-
-            # Plot the figures
-            figure, (ax1, ax2, ax3) = plt.subplots(3, 1)  # 3 rows, 1 column
-            figure.set_size_inches(10, 10)
-            figure.tight_layout(pad=3.0)
-            ax1.imshow(cv2.cvtColor(self.orig_frame, cv2.COLOR_BGR2RGB))
-            ax2.imshow(self.warped_frame, cmap='gray')
-            ax3.imshow(result)
-            ax3.plot(left_fitx, ploty, color='yellow')
-            ax3.plot(right_fitx, ploty, color='yellow')
-            ax1.set_title("Original Frame")
-            ax2.set_title("Warped Frame")
-            ax3.set_title("Warped Frame With Search Window")
-            plt.show()
-
-
-    def overlay_lane_lines(self, plot=False, plot_Superior = False):
-        #Desenha as linhas sobre a imagem
-        #Gera uma imagem para desenhar por cima
-        warp_zero = np.zeros_like(self.warped_frame).astype(np.uint8)
-        color_warp = np.dstack((warp_zero, warp_zero, warp_zero)) #Cria 3 camadas
-
-        #Reformulando os ponto de X e Y para aplicar no cv2.fillPoly()
-        pts_left = np.array([np.transpose(np.vstack([self.left_fitx, self.ploty]))])
-        pts_right = np.array([np.flipud(np.transpose(np.vstack([self.right_fitx, self.ploty])))])
-        pts = np.hstack((pts_left, pts_right))
-
-        #Desenhando a lina pela imagem preta vazia
-        cv2.fillPoly(color_warp, np.int_([pts]), (0,255,0))
-
-        #Desenhando a media central
-        cv2.circle(color_warp, (self.mediax, self.mediay),10,
-                   (255, 0, 0),3)
-        cv2.line(color_warp, (self.faixaXEsq, self.mediay),
-                 (self.faixaXDir, self.mediay),(194, 95, 151),3)
-
-        #Desenhando os pontos de origem, perpendicular em função da vista
-        #superior
-        #Ponto Perpendicular
-        cv2.circle(color_warp, (340,self.mediay),10,(230,25,100),3)
-
-        # Desenhando o circulo de origem junto com a linha
-        cv2.line(color_warp, (340, 400), (340, 200), (255, 255, 0), 3)
-        cv2.circle(color_warp, (340, 400), 5, (255, 255), 3)
-
-        #Desenhando a hipotenusa
-        cv2.line(color_warp,(340,400),(self.mediax, self.mediay), (255,50,60),3)
-
-
-        if plot_Superior == True:
-            cv2.imshow("Janele",color_warp)
-
-
-        #Voltando da imagem deformada para original
-        newwarp = cv2.warpPerspective(color_warp, self.inv_transformation_matrix, (
-            self.orig_frame.shape[
-                1], self.orig_frame.shape[0]))
-
-
-        #Combinando os resultaodos como a imagem original
-
-        result = cv2.addWeighted(self.orig_frame, 1, newwarp, 0.3, 0)
-
-        ############################Teste############################
-        #Desenha o ponto de origem no modo de perspectiva
-        #cv2.line(result, (340, 400), (340, 200), (255, 255, 0), 3)
-        #cv2.circle(result, (340, 400), 5, (255, 255), 3)
-        #############################################################
-        cv2.putText(result, 'Curve Radius: ' + str((self.left_curvem + self.right_curvem) / 2)[:7] + ' m',
-                    (int((5 / 600) * self.width), int((20 / 338) * self.height)),
-                    cv2.FONT_HERSHEY_SIMPLEX, (float((0.5 / 600) * self.width)), (
-                        255, 255, 255), 2, cv2.LINE_AA)
-        cv2.putText(result, 'Center Offset: ' + str(self.center_offset)[:7] + ' cm',
-                    (int((5 / 600) * self.width), int((40 / 338) * self.height)),
-                    cv2.FONT_HERSHEY_SIMPLEX, (float((0.5 / 600) * self.width)), (
-                        255, 255, 255), 2, cv2.LINE_AA)
-        cv2.polylines(result, np.int32([
-            self.roi_points]), True, (147, 20, 255), 3)
-        if plot == True:
-            # Plot the figures
-            cv2.imshow("Janela", cv2.cvtColor(result, cv2.COLOR_BGR2RGB))
-            """
-            figure, (ax1, ax2) = plt.subplots(2, 1)  # 2 rows, 1 column
-            figure.set_size_inches(10, 10)
-            figure.tight_layout(pad=3.0)
-            ax1.imshow(cv2.cvtColor(self.orig_frame, cv2.COLOR_BGR2RGB))
-            ax2.imshow(cv2.cvtColor(result, cv2.COLOR_BGR2RGB))
-            ax1.set_title("Original Frame")
-            ax2.set_title("Original Frame With Lane Overlay")
-            plt.show()
-            """
-        return result
-
-    def calculate_curvature(self, print_terminal = False):
-
-        #Calculando a curvatura da rua em metros
-        #Retorna o raio da curva
-
-        #Configura o y-value onde nós queremos calculara o raio da curva
-        #Seleciona o maximo de y-value, que é o fundo do frame
-
-        y_eval = np.max(self.ploty)
-
-        #Encaixa a curva polinomial para o mundo real
-        left_fit_cr = np.polyfit(self.lefty * self.YM_PER_PIX, self.leftx * (self.XM_PER_PIX),2)
-        right_fit_cr = np.polyfit(self.righty * self.YM_PER_PIX, self.rightx * (self.XM_PER_PIX),2)
-
-        #Calculando o raio da curvatura
-        left_curvem = ((1 + (2 * left_fit_cr[0] * y_eval * self.YM_PER_PIX + left_fit_cr[
-            1]) ** 2) ** 1.5) / np.absolute(2 * left_fit_cr[0])
-        right_curvem = ((1 + (2 * right_fit_cr[
-            0] * y_eval * self.YM_PER_PIX + right_fit_cr[
-                                  1]) ** 2) ** 1.5) / np.absolute(2 * right_fit_cr[0])
-        if print_terminal == True:
-            print(left_curvem, 'm', right_curvem, 'm')
-
-        self.left_curvem = left_curvem
-        self.right_curvem = right_curvem
-        return left_curvem, right_curvem
-
-
-    def calculate_car_position(self, print_terminal = False):
-
-        #Calculando o offset do centro
-
-        #Assuminodo que a câmera está centralizada
-        #Pegando a posição do carro em centimetros
-        car_location = self.orig_frame.shape[1]/2
-
-        #Encontrando a coordenada X da linha de fundo
-        height = self.orig_frame.shape[0]
-        bottom_left = self.left_fit[0]**height**2 + self.left_fit[1]*height + self.left_fit[2]
-        bottom_right = self.right_fit[0] * height**2 + self.right_fit[1]*height + self.right_fit[2]
-
-        #print(bottom_right, bottom_left)
-        self.center_lane = (bottom_right - bottom_left)/2 + bottom_left
-        center_offset = (np.abs(car_location) - np.abs(self.center_lane))* self.XM_PER_PIX*100
-
-        if print_terminal == True:
-            print(f"Centro Offset: {str(center_offset)} cm")
-
-        self.center_offset = center_offset
-        return center_offset
+        print(self.mediax, self.mediay)
 
 
 
-
-    def display_curvature_offset(self, frame, plot=False):
-
-        #Mostra a curvatura e o seu offset para estar centralizado
-
-        image_copy = None
-        if frame is None:
-            image_copy = self.orig_frame.copy()
-        else:
-            image_copy = frame
-
-        cv2.putText(image_copy, 'Curve Radius: ' + str((self.left_curvem + self.right_curvem) / 2)[:7] + ' m',
-                    (int((5 / 600) * self.width), int((20 / 338) * self.height)),
-                    cv2.FONT_HERSHEY_SIMPLEX, (float((0.5 / 600) * self.width)), (
-                        255, 255, 255), 2, cv2.LINE_AA)
-        cv2.putText(image_copy, 'Center Offset: ' + str(self.center_offset)[:7] + ' cm',
-                    (int((5 / 600) * self.width), int((40 / 338) * self.height)),
-                    cv2.FONT_HERSHEY_SIMPLEX, (float((0.5 / 600) * self.width)), (
-                        255, 255, 255), 2, cv2.LINE_AA)
-
-        if plot == True:
-            cv2.imshow("Image with Curvature and Offset", image_copy)
-            cv2.waitKey()
-            cv2.destroyAllWindows()
-
-        return image_copy
 
 
 def main():
     vid = cv2.VideoCapture(1) #640x480
+    vid.set(cv2.CAP_PROP_FRAME_WIDTH, 720)
+    vid.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
     if vid.isOpened():
         while True:
             ret, frame = vid.read()
-
             cv2.imshow("Janela", frame)
             time.sleep(2)
             cv2.destroyAllWindows()
@@ -672,67 +470,14 @@ def main():
 
             # Transformando em vista superior
             lane_obj.perspective_transform(plot=False)
-            #lane_obj.plot_roi(frame, plot=False)
-            # Calculando o histograma
+
             lane_obj.calculate_histogram(plot=False)
 
-            # Exemplo da pegagem do histograma
-            #lane_obj.histogram_peak()
 
             left_fit, right_fit = lane_obj.get_lane_line_indices_sliding_windows(
                 plot=False)
             lane_obj.get_lane_line_previous_window(left_fit, right_fit, plot=False)
-            #frame_with_lane_lines = lane_obj.overlay_lane_lines(True)
-            lane_obj.plot_roi(frame, False)
-            lane_obj.calculate_curvature(False)
-            lane_obj.calculate_car_position(print_terminal=False)
-            #lane_obj.display_curvature_offset(frame, True)
-            lane_obj.overlay_lane_lines(True, True)
 
             if(cv2.waitKey(1) & 0xFF == ord('q')):
                 break
 main()
-"""
-#Criando o objeto
-lane_obj = Lane(orig_frame=cv2.imread(img))
-
-#Criando isolando as faixas
-lane_obj.get_line_markings()
-
-#Desenhando o trapézio no frame
-lane_obj.plot_roi()
-
-#Transformando em vista superior
-lane_obj.perspective_transform()
-
-#Calculando o histograma
-lane_obj.calculate_histogram(plot=True)
-
-#Exemplo da pegagem do histograma
-lane_obj.histogram_peak()
-
-#Encontrando as faixas da esquerda e direita
-left_fit, right_fit = lane_obj.get_lane_line_indices_sliding_windows(plot=False)
-
-#Refinando as curvas polinomiais
-lane_obj.get_lane_line_previous_window(left_fit, right_fit, plot=False)
-
-#Sobrepondo o desenho sobre a imagem
-frame_with_lane_lines = lane_obj.overlay_lane_lines(False)
-
-#Calculando a cuvatura das faixas da direita e da esquerda
-lane_obj.calculate_curvature(False)
-
-#Calculando o centro offset
-lane_obj.calculate_car_position()
-
-#Mostra no display a curvatura e o offset
-lane_obj.display_curvature_offset(frame=frame_with_lane_lines,plot=True)
-"""
-#Testar pegando apenas a base X do histogram peak e elevar a
-#altura
-#      X
-#    /  \
-#   /    \
-#  /      \
-# / ______ \
