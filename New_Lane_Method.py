@@ -516,7 +516,7 @@ class Lane:
         cv2.line(color_warp, (self.faixaXEsq, self.mediay),
                  (self.faixaXDir, self.mediay),(194, 95, 151),3)
 
-        #Desenhando os pontos de origem, perpendicular em função da vista
+        #Desenhando o ponto de origem e o perpendicular em função da vista
         #superior
         #Ponto Perpendicular
         cv2.circle(color_warp, (340,self.mediay),10,(230,25,100),3)
@@ -528,7 +528,12 @@ class Lane:
         #Desenhando a hipotenusa
         cv2.line(color_warp,(340,400),(self.mediax, self.mediay), (255,50,60),3)
 
+        #Calculando o cateto adjacente e o oposto
+        catOposto = self.mediax-340
+        catAdjacente = 200
 
+        angulo = np.arctan(catOposto/catAdjacente)
+        print(angulo)
         if plot_Superior == True:
             cv2.imshow("Janele",color_warp)
 
