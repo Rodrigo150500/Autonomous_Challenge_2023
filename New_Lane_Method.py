@@ -44,6 +44,9 @@ class Lane:
         self.faixaXEsq = None
         self.faixaXDir = None
 
+        #ANGULO
+        self.angulo = None
+
         width = self.orig_image_size[0] #640
         height = self.orig_image_size[1] #480
         self.width = width
@@ -522,7 +525,6 @@ class Lane:
 
         #Desenhando a media central
 
-
         cv2.circle(color_warp, (self.mediax, self.mediay),10,
                    (255, 0, 0),3)
         cv2.line(color_warp, (self.faixaXEsq, self.mediay),
@@ -543,11 +545,13 @@ class Lane:
         cv2.line(color_warp,(roiXOrigem, roiYOrigem),(self.mediax, self.mediay), (255,50,60),3)
 
         #Calculando o cateto adjacente e o oposto
-        catOposto = self.mediax-meioX
-        catAdjacente = meioYTopo
+        catOposto = self.mediax-roiXOrigem
+        catAdjacente = self.mediay
 
-        angulo = np.arctan(catOposto/catAdjacente)
-        print(angulo)
+        self.angulo = np.arctan(catOposto/catAdjacente)
+
+
+
         if plot_Superior == True:
             cv2.imshow("Janele",color_warp)
 
@@ -707,6 +711,11 @@ def main():
             lane_obj.calculate_car_position(print_terminal=False)
             #lane_obj.display_curvature_offset(frame, True)
             lane_obj.overlay_lane_lines(True, True)
+
+            #ANGULO PARA O SERVO MOTOR
+            print(lane_obj.angulo)
+
+
 
             if(cv2.waitKey(1) & 0xFF == ord('q')):
                 break
