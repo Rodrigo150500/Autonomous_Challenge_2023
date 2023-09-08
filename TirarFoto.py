@@ -17,15 +17,16 @@ def tirarFoto():
     while True:
         cv2.imshow("Janele", frame)
         time.sleep(2)
-        cv2.destroyAllWindows()
+        cv2.imwrite("foto.jpg", frame)
+
         break
+
 
     if not ret:
         print("Não foi possível capturar o quadro.")
         exit()
 
     # Salvar o quadro como uma imagem
-    cv2.imwrite("foto.jpg", frame)
 
     # Liberar a captura
     cap.release()
@@ -36,7 +37,7 @@ def tirarFoto():
 def mostrarFoto():
 
     # Carregar a imagem
-    imagem = mpimg.imread("foto_autoexposicao.jpg")
+    imagem = mpimg.imread("foto.jpg")
 
     # Exibir a imagem
     plt.imshow(imagem)
@@ -45,5 +46,5 @@ def mostrarFoto():
     plt.show()
 
 
-#tirarFoto()
+tirarFoto()
 mostrarFoto()
