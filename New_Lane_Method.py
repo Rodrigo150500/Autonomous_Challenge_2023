@@ -364,7 +364,7 @@ class Lane:
 
     def get_lane_line_previous_window(self, left_fit, right_fit, plot = False):
 
-        #Pegando os parâmetros para preencher o meio entre as faixas
+        #Pegando os parâmetros para preencher o meio entre as faixas :)
 
         margin = self.margin
 
