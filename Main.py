@@ -38,33 +38,25 @@ class Lane:
         #Altura e largura do video
         self.orig_image_size = self.orig_frame.shape[::-1][1:]
 
-        width = self.orig_image_size[0] #1920
-        height = self.orig_image_size[1] #1080
+        #Centro das faixas
+        self.mediax = None
+        self.mediay = None
+        self.faixaXEsq = None
+        self.faixaXDir = None
+
+        width = self.orig_image_size[0] #640
+        height = self.orig_image_size[1] #480
         self.width = width
         self.height = height
         #Os pontos de região de interesse
         self.roi_points = np.float32([
-             (36, 105),  # Top-left
-             (0, 480),  # Bottom-left
-             (640, 480),  # Borron-right
-             (604, 105)  # Top-right
+             (168, 200),  # Top-left
+             (0, 400),  # Bottom-left
+             (640, 400),  # Borron-right
+             (472, 200)  # Top-right
         ])
         self.center_lane = None
-        #(36, 105),  # Top-left
-        #(0, 480),  # Bottom-left
-        #(640, 480),  # Borron-right
-        #(604, 105)  # Top-right
-        #Camera
-        #(161, 148),  # Top-left
-        #(0, 480),  # Bottom-left
-        #(640, 480),  # Borron-right
-        #(486, 148)  # Top-right
-        ################
-        #Celular
-        #(100, 292),  # Top-left
-        #(0, 1078),  # Bottom-left
-        #(1918, 1078),  # Borron-right
-        #(1818, 292)  # Top-right
+
         #Posição desejada através da região de interesse
         #Após a transformação de perspectiva a nova imagem terá 600px de largura, com padding de 150
         self.padding = int(0.25*width)
@@ -115,14 +107,14 @@ class Lane:
 
         # Isolando as faixas
         #Aplicando o algoritmo de sobel no canal de luminosidade ao longo dos eixos X e Y
-        _, sxbinary = edge.threshold(hls[:,:,1], thresh=(200,255))
+        _, sxbinary = edge.threshold(hls[:,:,1], thresh=(130,255))
         sxbinary = edge.blur_gaussian(sxbinary, ksize=3)
 
         #sxbinary = edge.mag_thresh(sxbinary, sobel_kernel=3, thresh=(80, 255))
 
         #Aplicando o threshold no canal de saturação, pois quanto maior o seu valor mais pura a cor será
         s_channel = hls[:,:,2] #Captando apenas o canal de saturação
-        _, s_binary = edge.threshold(s_channel,(200,255))
+        _, s_binary = edge.threshold(s_channel,(130,255))
 
         #Aplicando threshold no canal vermelho do frame, isso fará como que faça a captação da cor amarela
         #também, o branco no BGR é (255,255,255), o amarelo é (0,255,255), então se zerarmos o vermelho conseuimos
@@ -158,18 +150,20 @@ class Lane:
         if frame is None:
             frame = self.lane_line_markings
 
-            # Calculate the transformation matrix para pegar os pontos para a vista superior
+
+        # Calculate the transformation matrix para pegar os pontos para a vista superior
         self.transformation_matrix = cv2.getPerspectiveTransform(
             self.roi_points, self.desire_roi_points)
         # Calculate the inverse transformation matrix para voltar a imagem original
         self.inv_transformation_matrix = cv2.getPerspectiveTransform(
             self.desire_roi_points, self.roi_points)
 
+
+
         # Perform the transform using the transformation matrix
         self.warped_frame = cv2.warpPerspective(
             frame, self.transformation_matrix, self.orig_image_size, flags=(
                 cv2.INTER_LINEAR))
-
         # Convert image to binary
         (thresh, binary_warped) = cv2.threshold(
             self.warped_frame, 127, 255, cv2.THRESH_BINARY)
@@ -237,6 +231,7 @@ class Lane:
         rightx_current = rightx_base
         no_of_windows = self.no_of_windows
 
+
         for window in range(no_of_windows):
             #Identificando os limites de X (direita e esquerda) e Y (Topo e Inferior)
             win_y_low = self.warped_frame.shape[0] - (window + 1) * window_height #warped_frame[0] = 1080 | 972
@@ -250,6 +245,15 @@ class Lane:
                 win_xleft_high, win_y_high), (255, 255, 255), 2)
             cv2.rectangle(frame_sliding_window, (win_xright_low, win_y_low), (
                 win_xright_high, win_y_high), (255, 255, 255), 2)
+            if window == 5:
+                #Acha as coordenadas do circulo
+                self.mediax = int(((rightx_current-leftx_current)/2) +
+                                  leftx_current)
+                self.mediay = int(((win_y_high-win_y_low)/2)+win_y_low)
+
+                #Acha as coordenadas das faixas
+                self.faixaXEsq = int(rightx_current)
+                self.faixaXDir = int(leftx_current)
 
             #Identificando os indices dos pixels diferente de 0 em X e Y dentro da janela
             #As condições são referentes aos quatro cantos da janela
@@ -318,8 +322,6 @@ class Lane:
 
         self.left_fit = left_fit
         self.right_fit = right_fit
-
-
 
 
         prev_leftx = leftx
@@ -494,7 +496,7 @@ class Lane:
             plt.show()
 
 
-    def overlay_lane_lines(self, plot=False):
+    def overlay_lane_lines(self, plot=False, plot_Superior = False):
         #Desenha as linhas sobre a imagem
         #Gera uma imagem para desenhar por cima
         warp_zero = np.zeros_like(self.warped_frame).astype(np.uint8)
@@ -508,13 +510,49 @@ class Lane:
         #Desenhando a lina pela imagem preta vazia
         cv2.fillPoly(color_warp, np.int_([pts]), (0,255,0))
 
+        #Desenhando a media central
+        cv2.circle(color_warp, (self.mediax, self.mediay),10,
+                   (255, 0, 0),3)
+        cv2.line(color_warp, (self.faixaXEsq, self.mediay),
+                 (self.faixaXDir, self.mediay),(194, 95, 151),3)
+
+        #Desenhando o ponto de origem e o perpendicular em função da vista
+        #superior
+        #Ponto Perpendicular
+        cv2.circle(color_warp, (340,self.mediay),10,(230,25,100),3)
+
+        # Desenhando o circulo de origem junto com a linha
+        cv2.line(color_warp, (340, 400), (340, 200), (255, 255, 0), 3)
+        cv2.circle(color_warp, (340, 400), 5, (255, 255), 3)
+
+        #Desenhando a hipotenusa
+        cv2.line(color_warp,(340,400),(self.mediax, self.mediay), (255,50,60),3)
+
+        #Calculando o cateto adjacente e o oposto
+        catOposto = self.mediax-340
+        catAdjacente = 200
+
+        angulo = np.arctan(catOposto/catAdjacente)
+        print(angulo)
+        if plot_Superior == True:
+            cv2.imshow("Janele",color_warp)
+
+
         #Voltando da imagem deformada para original
         newwarp = cv2.warpPerspective(color_warp, self.inv_transformation_matrix, (
             self.orig_frame.shape[
                 1], self.orig_frame.shape[0]))
+
+
         #Combinando os resultaodos como a imagem original
+
         result = cv2.addWeighted(self.orig_frame, 1, newwarp, 0.3, 0)
 
+        ############################Teste############################
+        #Desenha o ponto de origem no modo de perspectiva
+        #cv2.line(result, (340, 400), (340, 200), (255, 255, 0), 3)
+        #cv2.circle(result, (340, 400), 5, (255, 255), 3)
+        #############################################################
         cv2.putText(result, 'Curve Radius: ' + str((self.left_curvem + self.right_curvem) / 2)[:7] + ' m',
                     (int((5 / 600) * self.width), int((20 / 338) * self.height)),
                     cv2.FONT_HERSHEY_SIMPLEX, (float((0.5 / 600) * self.width)), (
@@ -523,8 +561,6 @@ class Lane:
                     (int((5 / 600) * self.width), int((40 / 338) * self.height)),
                     cv2.FONT_HERSHEY_SIMPLEX, (float((0.5 / 600) * self.width)), (
                         255, 255, 255), 2, cv2.LINE_AA)
-        cv2.line(result,(340,0),(340,480), (255,0,0),2)
-        cv2.circle(result,(340,480),40,(0,255,0),2)
         cv2.polylines(result, np.int32([
             self.roi_points]), True, (147, 20, 255), 3)
         if plot == True:
@@ -625,11 +661,10 @@ class Lane:
 
 def main():
     vid = cv2.VideoCapture(1) #640x480
-    vid.set(cv2.CAP_PROP_FRAME_WIDTH, 720)
-    vid.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
     if vid.isOpened():
         while True:
             ret, frame = vid.read()
+
             cv2.imshow("Janela", frame)
             time.sleep(2)
             cv2.destroyAllWindows()
@@ -649,14 +684,15 @@ def main():
             # Exemplo da pegagem do histograma
             #lane_obj.histogram_peak()
 
-            left_fit, right_fit = lane_obj.get_lane_line_indices_sliding_windows(plot=False)
+            left_fit, right_fit = lane_obj.get_lane_line_indices_sliding_windows(
+                plot=False)
             lane_obj.get_lane_line_previous_window(left_fit, right_fit, plot=False)
             #frame_with_lane_lines = lane_obj.overlay_lane_lines(True)
             lane_obj.plot_roi(frame, False)
             lane_obj.calculate_curvature(False)
             lane_obj.calculate_car_position(print_terminal=False)
             #lane_obj.display_curvature_offset(frame, True)
-            lane_obj.overlay_lane_lines(True)
+            lane_obj.overlay_lane_lines(True, True)
 
             if(cv2.waitKey(1) & 0xFF == ord('q')):
                 break

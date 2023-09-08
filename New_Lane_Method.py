@@ -50,13 +50,11 @@ class Lane:
         self.height = height
         #Os pontos de região de interesse
         self.roi_points = np.float32([
-             (240, 325),  # Top-left
-             (100, 480),  # Bottom-left
-             (600, 480),  # Borron-right
-             (400, 325)  # Top-right
+             (168, 200),  # Top-left
+             (0, 400),  # Bottom-left
+             (640, 400),  # Borron-right
+             (472, 200)  # Top-right
         ])
-
-
         self.center_lane = None
 
         #Posição desejada através da região de interesse
@@ -109,14 +107,14 @@ class Lane:
 
         # Isolando as faixas
         #Aplicando o algoritmo de sobel no canal de luminosidade ao longo dos eixos X e Y
-        _, sxbinary = edge.threshold(hls[:,:,1], thresh=(220,255))
+        _, sxbinary = edge.threshold(hls[:,:,1], thresh=(130,255))
         sxbinary = edge.blur_gaussian(sxbinary, ksize=3)
 
         #sxbinary = edge.mag_thresh(sxbinary, sobel_kernel=3, thresh=(80, 255))
 
         #Aplicando o threshold no canal de saturação, pois quanto maior o seu valor mais pura a cor será
         s_channel = hls[:,:,2] #Captando apenas o canal de saturação
-        _, s_binary = edge.threshold(s_channel,(220,255))
+        _, s_binary = edge.threshold(s_channel,(130,255))
 
         #Aplicando threshold no canal vermelho do frame, isso fará como que faça a captação da cor amarela
         #também, o branco no BGR é (255,255,255), o amarelo é (0,255,255), então se zerarmos o vermelho conseuimos
@@ -247,7 +245,7 @@ class Lane:
                 win_xleft_high, win_y_high), (255, 255, 255), 2)
             cv2.rectangle(frame_sliding_window, (win_xright_low, win_y_low), (
                 win_xright_high, win_y_high), (255, 255, 255), 2)
-            if window == 1:
+            if window == 5:
                 #Acha as coordenadas do circulo
                 self.mediax = int(((rightx_current-leftx_current)/2) +
                                   leftx_current)
@@ -364,7 +362,7 @@ class Lane:
 
     def get_lane_line_previous_window(self, left_fit, right_fit, plot = False):
 
-        #Pegando os parâmetros para preencher o meio entre as faixas :)
+        #Pegando os parâmetros para preencher o meio entre as faixas
 
         margin = self.margin
 
@@ -499,15 +497,6 @@ class Lane:
 
 
     def overlay_lane_lines(self, plot=False, plot_Superior = False):
-
-
-        meioX = int((self.roi_points[2][0])/2)
-        meioYBaixo = int((self.roi_points[2][0]/2))
-        meioYTopo = int((self.roi_points[0][1]))
-
-        roiXMeio = int((self.roi_points[2][0]-self.roi_points[1][0])/2 + self.roi_points[1][0])
-        roiYBaixo = int(self.roi_points[1][1])
-
         #Desenha as linhas sobre a imagem
         #Gera uma imagem para desenhar por cima
         warp_zero = np.zeros_like(self.warped_frame).astype(np.uint8)
@@ -522,34 +511,26 @@ class Lane:
         cv2.fillPoly(color_warp, np.int_([pts]), (0,255,0))
 
         #Desenhando a media central
-
-        #Circulo da media do meio da pista
         cv2.circle(color_warp, (self.mediax, self.mediay),10,
                    (255, 0, 0),3)
-
-        #Linha de centro
         cv2.line(color_warp, (self.faixaXEsq, self.mediay),
                  (self.faixaXDir, self.mediay),(194, 95, 151),3)
-
-        #Circulo da vista reta da camera, como se a camera fosse reta
-        cv2.circle(color_warp, (meioX,self.mediay),10,(230,25,100),3)
-
 
         #Desenhando o ponto de origem e o perpendicular em função da vista
         #superior
         #Ponto Perpendicular
+        cv2.circle(color_warp, (340,self.mediay),10,(230,25,100),3)
 
         # Desenhando o circulo de origem junto com a linha
-        cv2.line(color_warp, (roiXMeio, roiYBaixo), (meioX,self.mediay), (255, 255, 0), 3)
-        cv2.circle(color_warp, (roiXMeio, roiYBaixo), 10, (255, 255,35), 3)
+        cv2.line(color_warp, (340, 400), (340, 200), (255, 255, 0), 3)
+        cv2.circle(color_warp, (340, 400), 5, (255, 255), 3)
 
         #Desenhando a hipotenusa
-
-        cv2.line(color_warp,(roiXMeio, roiYBaixo),(self.mediax, self.mediay), (255,50,60),3)
+        cv2.line(color_warp,(340,400),(self.mediax, self.mediay), (255,50,60),3)
 
         #Calculando o cateto adjacente e o oposto
-        catOposto = self.mediax-meioX
-        catAdjacente = meioYTopo
+        catOposto = self.mediax-340
+        catAdjacente = 200
 
         angulo = np.arctan(catOposto/catAdjacente)
         print(angulo)
@@ -595,7 +576,7 @@ class Lane:
             ax2.set_title("Original Frame With Lane Overlay")
             plt.show()
             """
-        return result, angulo
+        return result
 
     def calculate_curvature(self, print_terminal = False):
 
@@ -679,7 +660,7 @@ class Lane:
 
 
 def main():
-    vid = cv2.VideoCapture(0) #640x480
+    vid = cv2.VideoCapture(1) #640x480
     if vid.isOpened():
         while True:
             ret, frame = vid.read()
@@ -713,10 +694,50 @@ def main():
             #lane_obj.display_curvature_offset(frame, True)
             lane_obj.overlay_lane_lines(True, True)
 
-            angulo = lane_obj.overlay_lane_lines()[1]
-            print(angulo)
-
             if(cv2.waitKey(1) & 0xFF == ord('q')):
                 break
 main()
+"""
+#Criando o objeto
+lane_obj = Lane(orig_frame=cv2.imread(img))
 
+#Criando isolando as faixas
+lane_obj.get_line_markings()
+
+#Desenhando o trapézio no frame
+lane_obj.plot_roi()
+
+#Transformando em vista superior
+lane_obj.perspective_transform()
+
+#Calculando o histograma
+lane_obj.calculate_histogram(plot=True)
+
+#Exemplo da pegagem do histograma
+lane_obj.histogram_peak()
+
+#Encontrando as faixas da esquerda e direita
+left_fit, right_fit = lane_obj.get_lane_line_indices_sliding_windows(plot=False)
+
+#Refinando as curvas polinomiais
+lane_obj.get_lane_line_previous_window(left_fit, right_fit, plot=False)
+
+#Sobrepondo o desenho sobre a imagem
+frame_with_lane_lines = lane_obj.overlay_lane_lines(False)
+
+#Calculando a cuvatura das faixas da direita e da esquerda
+lane_obj.calculate_curvature(False)
+
+#Calculando o centro offset
+lane_obj.calculate_car_position()
+
+#Mostra no display a curvatura e o offset
+lane_obj.display_curvature_offset(frame=frame_with_lane_lines,plot=True)
+"""
+#Testar pegando apenas a base X do histogram peak e elevar a
+#altura
+#      X
+#    /  \
+#   /    \
+#  /      \
+# / ______ \
