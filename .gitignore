@@ -5,3 +5,5 @@
 *.mp4
 *.rar
 *.txt
+runs/detect/train8/events.out.tfevents.1693793390.DESKTOP-TSR2HPG.1248.0
+runs/detect/train8/results.csv
