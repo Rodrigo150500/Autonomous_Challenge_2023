@@ -44,16 +44,19 @@ class Lane:
         self.faixaXEsq = None
         self.faixaXDir = None
 
+        #ANGULO
+        self.angulo = None
+
         width = self.orig_image_size[0] #640
         height = self.orig_image_size[1] #480
         self.width = width
         self.height = height
         #Os pontos de região de interesse
         self.roi_points = np.float32([
-             (240, 325),  # Top-left
-             (100, 480),  # Bottom-left
-             (600, 480),  # Borron-right
-             (400, 325)  # Top-right
+             (140, 300),  # Top-left
+             (0, 480),  # Bottom-left
+             (640, 480),  # Borron-right
+             (500, 300)  # Top-right
         ])
 
 
@@ -109,14 +112,14 @@ class Lane:
 
         # Isolando as faixas
         #Aplicando o algoritmo de sobel no canal de luminosidade ao longo dos eixos X e Y
-        _, sxbinary = edge.threshold(hls[:,:,1], thresh=(220,255))
+        _, sxbinary = edge.threshold(hls[:,:,1], thresh=(210,255))
         sxbinary = edge.blur_gaussian(sxbinary, ksize=3)
 
         #sxbinary = edge.mag_thresh(sxbinary, sobel_kernel=3, thresh=(80, 255))
 
         #Aplicando o threshold no canal de saturação, pois quanto maior o seu valor mais pura a cor será
         s_channel = hls[:,:,2] #Captando apenas o canal de saturação
-        _, s_binary = edge.threshold(s_channel,(220,255))
+        _, s_binary = edge.threshold(s_channel,(160,255))
 
         #Aplicando threshold no canal vermelho do frame, isso fará como que faça a captação da cor amarela
         #também, o branco no BGR é (255,255,255), o amarelo é (0,255,255), então se zerarmos o vermelho conseuimos
@@ -247,7 +250,7 @@ class Lane:
                 win_xleft_high, win_y_high), (255, 255, 255), 2)
             cv2.rectangle(frame_sliding_window, (win_xright_low, win_y_low), (
                 win_xright_high, win_y_high), (255, 255, 255), 2)
-            if window == 1:
+            if window == 5:
                 #Acha as coordenadas do circulo
                 self.mediax = int(((rightx_current-leftx_current)/2) +
                                   leftx_current)
@@ -504,6 +507,9 @@ class Lane:
         meioX = int((self.roi_points[2][0])/2)
         meioYBaixo = int((self.roi_points[2][0]/2))
         meioYTopo = int((self.roi_points[0][1]))
+        roiXOrigem = int(((self.roi_points[2][0]-self.roi_points[1][0])/2) + self.roi_points[1][0])
+        roiYOrigem = int(self.roi_points[1][1])
+
         #Desenha as linhas sobre a imagem
         #Gera uma imagem para desenhar por cima
         warp_zero = np.zeros_like(self.warped_frame).astype(np.uint8)
@@ -518,29 +524,34 @@ class Lane:
         cv2.fillPoly(color_warp, np.int_([pts]), (0,255,0))
 
         #Desenhando a media central
+
         cv2.circle(color_warp, (self.mediax, self.mediay),10,
                    (255, 0, 0),3)
         cv2.line(color_warp, (self.faixaXEsq, self.mediay),
                  (self.faixaXDir, self.mediay),(194, 95, 151),3)
-        cv2.circle(color_warp, (meioX,self.mediay),10,(230,25,100),3)
+        #Circulo reto
+        cv2.circle(color_warp, (roiXOrigem,self.mediay),10,(230,25,100),3)
 
 
         #Desenhando o ponto de origem e o perpendicular em função da vista
         #superior
         #Ponto Perpendicular
-        # Desenhando o circulo de origem junto com a linha
-        cv2.line(color_warp, (meioX, meioYBaixo), (meioX, meioYTopo), (255, 255, 0), 3)
-        cv2.circle(color_warp, (meioX, meioYBaixo), 5, (255, 255), 3)
+        cv2.line(color_warp, (roiXOrigem, roiYOrigem), (roiXOrigem, self.mediay), (255, 255, 0), 3)
+
+        #Origem do circulo
+        cv2.circle(color_warp, (roiXOrigem, roiYOrigem), 5, (255, 255), 3)
 
         #Desenhando a hipotenusa
-        cv2.line(color_warp,(meioX,meioYBaixo),(self.mediax, self.mediay), (255,50,60),3)
+        cv2.line(color_warp,(roiXOrigem, roiYOrigem),(self.mediax, self.mediay), (255,50,60),3)
 
         #Calculando o cateto adjacente e o oposto
-        catOposto = self.mediax-meioX
-        catAdjacente = meioYTopo
+        catOposto = self.mediax-roiXOrigem
+        catAdjacente = self.mediay
 
-        angulo = np.arctan(catOposto/catAdjacente)
-        print(angulo)
+        self.angulo = np.arctan(catOposto/catAdjacente)
+
+
+
         if plot_Superior == True:
             cv2.imshow("Janele",color_warp)
 
@@ -667,18 +678,19 @@ class Lane:
 
 
 def main():
-    vid = cv2.VideoCapture(1) #640x480
+    vid = cv2.VideoCapture(0) #640x480
     if vid.isOpened():
         while True:
             ret, frame = vid.read()
-
-            cv2.imshow("Janela", frame)
+            cv2.imshow("Janela 1", frame)
             time.sleep(2)
             cv2.destroyAllWindows()
             break
         while True:
-            #time.sleep(0.35)
+            #time.sleep(0.01)
             ret, frame = vid.read()
+            ret2, frame2 = vid.read()
+
             lane_obj = Lane(orig_frame=frame)
             lane_obj.get_line_markings(frame,plot=False)
 
@@ -701,7 +713,9 @@ def main():
             #lane_obj.display_curvature_offset(frame, True)
             lane_obj.overlay_lane_lines(True, True)
 
+            #ANGULO PARA O SERVO MOTOR
+            print(lane_obj.angulo)
             if(cv2.waitKey(1) & 0xFF == ord('q')):
                 break
-main()
 
+main()
