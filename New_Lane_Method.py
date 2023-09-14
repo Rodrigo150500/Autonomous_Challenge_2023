@@ -715,6 +715,7 @@ def main():
 
             #ANGULO PARA O SERVO MOTOR
             print(lane_obj.angulo)
+
             if(cv2.waitKey(1) & 0xFF == ord('q')):
                 break
 
