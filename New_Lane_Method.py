@@ -119,7 +119,7 @@ class Lane:
 
         #Aplicando o threshold no canal de saturação, pois quanto maior o seu valor mais pura a cor será
         s_channel = hls[:,:,2] #Captando apenas o canal de saturação
-        _, s_binary = edge.threshold(s_channel,(160,255))
+        _, s_binary = edge.threshold(s_channel,(200,255))
 
         #Aplicando threshold no canal vermelho do frame, isso fará como que faça a captação da cor amarela
         #também, o branco no BGR é (255,255,255), o amarelo é (0,255,255), então se zerarmos o vermelho conseuimos
@@ -199,7 +199,6 @@ class Lane:
             ax2.plot(self.histogram)
             ax2.set_title("Histogram Peaks")
             plt.show()
-
         return self.histogram
 
     def histogram_peak(self):
@@ -209,6 +208,7 @@ class Lane:
         midpoint = int(self.histogram.shape[0]/2)
         leftx_base = np.argmax(self.histogram[:midpoint]) #Encontra o indice com maior pixel na esquerda no eixo X
         rightx_base = np.argmax(self.histogram[midpoint:]) + midpoint #Encontra o indice com maior pixel da direita no eixo X
+        print(leftx_base, rightx_base)
         return (leftx_base, rightx_base)
     def get_lane_line_indices_sliding_windows(self, plot=False):
         #Pegando as faixas da direita e esquerda
@@ -240,7 +240,7 @@ class Lane:
         for window in range(no_of_windows):
             #Identificando os limites de X (direita e esquerda) e Y (Topo e Inferior)
             win_y_low = self.warped_frame.shape[0] - (window + 1) * window_height #warped_frame[0] = 1080 | 972
-            win_y_high = self.warped_frame.shape[0]- window * window_height#1080
+            win_y_high = self.warped_frame.shape[0]- window * window_height #1080
 
             win_xleft_low = leftx_current - margin #399
             win_xleft_high = leftx_current + margin #719
@@ -584,16 +584,7 @@ class Lane:
         if plot == True:
             # Plot the figures
             cv2.imshow("Janela", cv2.cvtColor(result, cv2.COLOR_BGR2RGB))
-            """
-            figure, (ax1, ax2) = plt.subplots(2, 1)  # 2 rows, 1 column
-            figure.set_size_inches(10, 10)
-            figure.tight_layout(pad=3.0)
-            ax1.imshow(cv2.cvtColor(self.orig_frame, cv2.COLOR_BGR2RGB))
-            ax2.imshow(cv2.cvtColor(result, cv2.COLOR_BGR2RGB))
-            ax1.set_title("Original Frame")
-            ax2.set_title("Original Frame With Lane Overlay")
-            plt.show()
-            """
+
         return result
 
     def calculate_curvature(self, print_terminal = False):
@@ -646,10 +637,6 @@ class Lane:
 
         self.center_offset = center_offset
         return center_offset
-
-
-
-
     def display_curvature_offset(self, frame, plot=False):
 
         #Mostra a curvatura e o seu offset para estar centralizado
@@ -689,29 +676,31 @@ def main():
         while True:
             #time.sleep(0.01)
             ret, frame = vid.read()
+            img = cv2.resize(frame,(640, 480))
+
             ret2, frame2 = vid.read()
 
-            lane_obj = Lane(orig_frame=frame)
-            lane_obj.get_line_markings(frame,plot=False)
+            lane_obj = Lane(orig_frame=img)
+            lane_obj.get_line_markings(frame,plot=True)
 
             # Transformando em vista superior
             lane_obj.perspective_transform(plot=False)
             #lane_obj.plot_roi(frame, plot=False)
             # Calculando o histograma
-            lane_obj.calculate_histogram(plot=False)
+            lane_obj.calculate_histogram(plot=True)
 
             # Exemplo da pegagem do histograma
             #lane_obj.histogram_peak()
 
             left_fit, right_fit = lane_obj.get_lane_line_indices_sliding_windows(
-                plot=False)
+                plot=True)
             lane_obj.get_lane_line_previous_window(left_fit, right_fit, plot=False)
             #frame_with_lane_lines = lane_obj.overlay_lane_lines(True)
             lane_obj.plot_roi(frame, False)
             lane_obj.calculate_curvature(False)
             lane_obj.calculate_car_position(print_terminal=False)
             #lane_obj.display_curvature_offset(frame, True)
-            lane_obj.overlay_lane_lines(True, True)
+            lane_obj.overlay_lane_lines(False, False)
 
             #ANGULO PARA O SERVO MOTOR
             print(lane_obj.angulo)

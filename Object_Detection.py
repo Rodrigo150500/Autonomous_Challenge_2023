@@ -1,8 +1,13 @@
 from ultralytics import YOLO
-
+import time
 model = YOLO("best.pt")
 
 
-results = model.predict(source="0", show=True, conf=0.80)
+def vision():
+    results = model.predict(source="pessoa.jpg", show=True, conf=0.80)
 
-print(results.boxes)
+
+    time.sleep(5)
+
+
+vision()
