@@ -14,12 +14,8 @@ import subprocess
 #dataset = project.version(1).download("yolov8")
 
 
-#comando = "yolo task=detect mode=train model=yolov8n.pt data='Autonomous_Challenge_2023/datasets/Autonomous-Vehicle-1/data.yaml' epochs=100 imgsz=800 plots=True"
-
-
-
 #Executa o treinamento e deixa o modelo treinado dentro da ultima pasta de train
-caminho_data_yaml = r"dataset/Autonomous-Car-1/data.yaml"
+caminho_data_yaml = r"Dataset/Autonomous-Car-1/data.yaml"
 
 comando_yolo = f"yolo task=detect mode=train model=yolov8n.pt data={caminho_data_yaml} epochs=1 imgsz=800 plots=True"
 
