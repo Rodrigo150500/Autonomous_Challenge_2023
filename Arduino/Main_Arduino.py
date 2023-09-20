@@ -1,17 +1,20 @@
 import serial
+import cv2
+import Metodo_Aila as aila
 
-serialPort = serial.Serial("COM3", baudrate=9600, timeout=1)
+conectar = serial.Serial("COM3", 115200, timeout=1)
+cam = cv2.VideoCapture(0)
 
+if cam.isOpened():
+    while True:
+        ret, frame = cam.read()
+        Aila = aila.Lane(frame)
 
-def receberArduino():
-    while 1:
-        arduinoData = serialPort.read().decode("utf-8")
-        print(arduinoData)
+        anguloMD = Aila.angulo(frame=frame)
 
-def enviarArduino(msg):
-    serialPort.write(msg.encode("utf-8"))
+        conectar.write(anguloMD.encode("utf-8"))
 
+        print(conectar.readline().decode("utf-8"))
 
-angulo = 'G'
-while True:
-    enviarArduino(angulo)
+        if (cv2.waitKey(1) & 0xFF == ord('q')):
+            break

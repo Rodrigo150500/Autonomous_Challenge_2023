@@ -22,6 +22,7 @@ def setupSerial(baudRate, serialPortName):
 
     print("Serial port " + serialPortName + " opened  Baudrate " + str(baudRate))
 
+    waitForArduino()
 
 
 # ========================
@@ -48,10 +49,10 @@ def sendToArduino_Multi(msg1, msg2, msg3):
     stringWithMarkers += msg3
     stringWithMarkers += (endMarker)
 
-    serialPort.write(stringWithMarkers.encode('utf-8'))  # encode needed for Python3
+    serialPort.write(stringWithMarkers.encode('utf-8'))  #encode needed for Python3
 
 
-# =======================
+# ==================
 
 def recvLikeArduino():
     global startMarker, endMarker, serialPort, dataStarted, dataBuf, messageComplete
@@ -84,11 +85,11 @@ def waitForArduino():
 
     print("Waiting for Arduino to reset")
 
-    msg = "Arduino pronto"
-    while msg.find("Arduino pronto") == -1:
-        msg = recvLikeArduino()
-        if not (msg == 'XXX'):
-            print(msg)
+    #msg = ""
+    #while msg.find("Arduino pronto") == -1:
+    #    msg = recvLikeArduino()
+    #    if not (msg == 'XXX'):
+    #        print(msg)
 
     # Teste de envio
     sendToArduino("Teste de comunicacao")

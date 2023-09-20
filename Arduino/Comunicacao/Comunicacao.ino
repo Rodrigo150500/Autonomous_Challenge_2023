@@ -1,33 +1,30 @@
-String letra = "nome";
-
 void setup() {
-  Serial.begin(9600); // Inicialize a comunicação serial
-  pinMode(LED_BUILTIN, OUTPUT);
-
+  Serial.begin(115200); // Inicialize a comunicação serial
+  pinMode(13, OUTPUT);
 }
 
 void loop() {
-  char angulo = receberPycharm();
-  Serial.println(angulo);
-  if (angulo == 'G'){
-    digitalWrite(LED_BUILTIN, HIGH);
-    delay(250);
-    digitalWrite(LED_BUILTIN, LOW);
-    delay(250);
-  }
+String data = receberPycharm();
+if (data){
+  
+}
+Serial.print(data);
+
 } 
 
 void enviarPycharm(String msg){
   Serial.print(msg);
 }
 
-char receberPycharm() {
-  if (Serial.available() > 0) {
+String receberPycharm() {
+  String data = "";
+  
+  while (Serial.available() != 0) {
     // Se houver dados disponíveis na porta serial
-    char data = Serial.read();  // Leia o próximo caractere
-    Serial.print("Dado recebido: ");
-    Serial.println(data);  // Imprima o dado recebido
-      return data;
-
+    char letra = Serial.read();  // Leia o próximo caractere
+    data += letra;
   }
+  return data;
+
+
 }
