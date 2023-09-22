@@ -1,10 +1,10 @@
 from ultralytics import YOLO
 import time
-model = YOLO("best.pt")
+model = YOLO("yolov7_custom.pt")
 
 
 def vision():
-    results = model.predict(source="pessoa.jpg",conf=0.80)
+    results = model.predict(source="0",conf=0.80)
 
     for result in results:
         #bbox = result.xyxy[0]  # Coordenadas da caixa delimitadora [x_min, y_min, x_max, y_max]

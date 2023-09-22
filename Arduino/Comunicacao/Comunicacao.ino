@@ -1,30 +1,26 @@
+
 void setup() {
-  Serial.begin(115200); // Inicialize a comunicação serial
-  pinMode(13, OUTPUT);
+  Serial.begin(9600);
 }
-
+String palavra = "";
+int angulo = 0;
 void loop() {
-String data = receberPycharm();
-if (data){
-  
-}
-Serial.print(data);
-
-} 
-
-void enviarPycharm(String msg){
-  Serial.print(msg);
+  palavra = readSerial();
+  //angulo = stringToInt(palavra);
+  Serial.println(palavra);
+  delay(50);
 }
 
-String receberPycharm() {
-  String data = "";
-  
-  while (Serial.available() != 0) {
-    // Se houver dados disponíveis na porta serial
-    char letra = Serial.read();  // Leia o próximo caractere
-    data += letra;
+String readSerial(){
+  String palavra = "";
+  while (Serial.available() > 0){
+    char c = Serial.read();
+    palavra += c;
   }
-  return data;
+  return palavra;
+}
 
 
+int stringToInt(String str) {
+  return str.toInt();
 }
