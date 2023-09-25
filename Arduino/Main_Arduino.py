@@ -19,11 +19,11 @@ if cam.isOpened():
         anguloMD = Aila.angulo(frame=frame)
 
         #Enviando o angulo para o arduino
-        conectar.write(anguloMD.encode("UTF-8"))
-        #print(anguloMD)
+        conectar.write(anguloMD.encode())
+        print(anguloMD)
 
         #Recebendo o que tem no serial do arduino com delay de 100 milisegundo
-        print(conectar.readline().decode("UTF-8"))
+        time.sleep(1)
 
         #Fechando a câmera ao apertar q
         if (cv2.waitKey(1) & 0xFF == ord('q')):

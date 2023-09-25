@@ -6,6 +6,9 @@ ser = serial.Serial('COM3', baudrate=9600, timeout=1)
 
 while True:
     ser.write("35".encode())
+    time.sleep(2)
+    ser.write('90'.encode())
+    time.sleep(2)
 
     print(ser.readline().decode('utf-8'))
 

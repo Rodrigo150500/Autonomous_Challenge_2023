@@ -681,7 +681,7 @@ def main():
             # lane_obj.histogram_peak()
 
             left_fit, right_fit = lane_obj.get_lane_line_indices_sliding_windows(
-                plot=False)
+                plot=True)
             lane_obj.get_lane_line_previous_window(left_fit, right_fit, plot=False)
             # frame_with_lane_lines = lane_obj.overlay_lane_lines(True)
             lane_obj.plot_roi(frame, False)
