@@ -18,12 +18,25 @@ if cam.isOpened():
         Aila = aila.Lane(frame)
         anguloMD = Aila.angulo(frame=frame)
 
+        anguloInicial = anguloMD[:2]
+
+        if anguloInicial != "+0" and anguloMD[0] == "+":
+            #Trocar o anguloMD para -
+            anguloLista = list(anguloMD)
+            anguloLista[0] = '-'
+            novoAngulo = ''.join(anguloLista)
+            conectar.write(novoAngulo.encode())
+        else:
+            #Trocar o anguloMD para +
+            anguloLista = list(anguloMD)
+            anguloLista[0] = '+'
+            novoAngulo = ''.join(anguloLista)
+            conectar.write(novoAngulo.encode())
         #Enviando o angulo para o arduino
-        conectar.write(anguloMD.encode())
-        print(anguloMD)
+        #conectar.write(anguloMD.encode())
 
         #Recebendo o que tem no serial do arduino com delay de 100 milisegundo
-        time.sleep(1)
+        time.sleep(0.1)
 
         #Fechando a câmera ao apertar q
         if (cv2.waitKey(1) & 0xFF == ord('q')):
