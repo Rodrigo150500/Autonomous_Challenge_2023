@@ -1,19 +1,16 @@
 import serial
 import time
-'''
+
 #Conectando com o arduino
-ser = serial.Serial('COM3', baudrate=9600, timeout=1)
+ser = serial.Serial('COM5', baudrate=9600, timeout=1)
 
 while True:
     ser.write("-35".encode())
     time.sleep(2)
     ser.write('35'.encode())
     time.sleep(2)
-'''
 
-teste = "+24"
 
-print(teste[:2])
 
 """
 while 1:
