@@ -4,7 +4,7 @@ import cv2
 import Metodo_Aila as aila
 
 #Conectando com o Arduino
-conectar = serial.Serial("COM6", 9600)
+conectar = serial.Serial("COM7", 9600)
 
 #Abrindo a câmera
 cam = cv2.VideoCapture(0)
@@ -18,29 +18,11 @@ if cam.isOpened():
         Aila = aila.Lane(frame)
         anguloMD = Aila.angulo(frame=frame)
 
-        #anguloInicial = anguloMD[:2]
-        #conectar.write(anguloMD.encode())
-
-        '''
-        if anguloInicial != "+0" and anguloMD[0] == "+":
-            #Trocar o anguloMD para -
-            anguloLista = list(anguloMD)
-            anguloLista[0] = '-'
-            novoAngulo = ''.join(anguloLista)
-            conectar.write(novoAngulo.encode())
-        else:
-            #Trocar o anguloMD para +
-            anguloLista = list(anguloMD)
-            anguloLista[0] = '+'
-            novoAngulo = ''.join(anguloLista)
-            conectar.write(novoAngulo.encode())
-        '''
-
         #Enviando o angulo para o arduino
         conectar.write(anguloMD.encode())
         print(anguloMD)
         #Recebendo o que tem no serial do arduino com delay de 100 milisegundo
-        time.sleep(0.1)
+        time.sleep(0.2)
 
         #Fechando a câmera ao apertar q
         if (cv2.waitKey(1) & 0xFF == ord('q')):
