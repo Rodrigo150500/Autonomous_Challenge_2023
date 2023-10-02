@@ -36,8 +36,6 @@ class Lane:
             (500, 300)  # Top-right
         ])
 
-
-
         self.orig_image_size = self.orig_frame.shape[::-1][1:]
 
         width = self.orig_image_size[0]  # 640
@@ -105,6 +103,11 @@ class Lane:
         self.anguloEsquerda = None
         self.anguloDireita = None
 
+        self.saturation = None
+        self.luminosity = None
+        self.red = None
+
+
     def get_line_markings(self, frame=None, plot=False):
 
         if frame is None:
@@ -113,11 +116,11 @@ class Lane:
         # Convertendo o video em frame de BGR para HLS
         hls = cv2.cvtColor(frame, cv2.COLOR_BGR2HLS)
 
-        _, sxbinary = edge.threshold(hls[:, :, 1], thresh=(180, 255))
+        _, sxbinary = edge.threshold(hls[:, :, 1], thresh=(self.luminosity, 255))
         sxbinary = edge.blur_gaussian(sxbinary, ksize=3)
         s_channel = hls[:, :, 2]  # Captando apenas o canal de saturação
-        _, s_binary = edge.threshold(s_channel, (180, 255))
-        _, r_thresh = edge.threshold(frame[:, :, 2], thresh=(150, 255))
+        _, s_binary = edge.threshold(s_channel, (self.saturation, 255))
+        _, r_thresh = edge.threshold(frame[:, :, 2], thresh=(self.red, 255))
         self.rs_binary = cv2.bitwise_and(s_binary, r_thresh)
         self.lane_line_markings = cv2.bitwise_or(self.rs_binary, sxbinary.astype(np.uint8))
         if plot == True:
@@ -473,6 +476,7 @@ def main():
     vid = cv2.VideoCapture(0)
     #Painel de Gerenciamento
     cv2.namedWindow('Controle')
+    cv2.resizeWindow('Controle', 700,512)
 
     #Controle da Media Central
     cv2.createTrackbar('largTopoMD', 'Controle', 0, 320, nothing)
@@ -487,13 +491,28 @@ def main():
     cv2.createTrackbar('AuxBase', 'Controle', 0, 480, nothing)
 
     #Principal
-    cv2.createTrackbar('altAilaTopo', 'Controle', 0, 480, nothing)
-    cv2.createTrackbar('altAilaBase', 'Controle', 0, 480, nothing)
+    cv2.createTrackbar('AilaTopo', 'Controle', 0, 480, nothing)
+    cv2.createTrackbar('AilaBase', 'Controle', 0, 480, nothing)
+
+    #Controle do threshol
+    cv2.createTrackbar('saturation', 'Controle', 0, 255, nothing)
+    cv2.createTrackbar('luminosity', 'Controle', 0, 255, nothing)
+    cv2.createTrackbar('red', 'Controle', 0, 255, nothing)
+
+
+    #SWITCH
+    cv2.createTrackbar('Lane Mark', 'Controle', 0, 1, nothing)
+
 
     if vid.isOpened():
         while True:
             ret, frame = vid.read()
+            lane = Lane(orig_frame=frame)
 
+
+
+            #SLIDER
+            #ROI
             largBaseMD_L = 320 - cv2.getTrackbarPos('largBaseMD', 'Controle')
             largBaseMD_R = 320 + cv2.getTrackbarPos('largBaseMD', 'Controle')
 
@@ -503,13 +522,29 @@ def main():
             alturaMD_Base = 480 - cv2.getTrackbarPos('altMD_Base', 'Controle')
             alturaMD_Topo = 480 - cv2.getTrackbarPos('altMD_Topo', 'Controle')
 
-            alturaAilaBase = 480 - cv2.getTrackbarPos('altAilaBase', 'Controle')
-            alturaAilaTopo = 480 - cv2.getTrackbarPos('altAilaTopo', 'Controle')
+            alturaAilaBase = 480 - cv2.getTrackbarPos('AilaBase', 'Controle')
+            alturaAilaTopo = 480 - cv2.getTrackbarPos('AilaTopo', 'Controle')
 
             alturaAilaAuxBase = 480 - cv2.getTrackbarPos('AuxBase', 'Controle')
             alturaAilaAuxTopo = 480 - cv2.getTrackbarPos('AuxTopo', 'Controle')
 
-            lane = Lane(orig_frame=frame)
+            #THRESHOL
+            lane.saturation = cv2.getTrackbarPos('saturation', 'Controle')
+            lane.luminosity = cv2.getTrackbarPos('luminosity', 'Controle')
+            lane.red = cv2.getTrackbarPos('red', 'Controle')
+
+            print('='*50)
+            print('SATURAÇÃO')
+            print('='*50)
+            print(f'Luminosity: {lane.luminosity}')
+            print(f'Saturação: {lane.saturation}')
+            print(f'Red: {lane.red}')
+
+
+            #SWITCH
+            getLine = cv2.getTrackbarPos('Lane Mark', 'Controle')
+
+
 
             #Controle da Média Central
             lane.roi_pointsMD[1][0] = largBaseMD_L
@@ -523,16 +558,18 @@ def main():
 
             lane.roi_pointsMD[0][1] = alturaMD_Topo
             lane.roi_pointsMD[3][1] = alturaMD_Topo
-            print('='*50)
-            print('MEDIA CENTRAL BASE ESQ/DIR')
-            print('='*50)
-            print(largBaseMD_L, largBaseMD_R)
-            print('MEDIA CENTRAL TOPO ESQ/DIR')
-            print(largTopoMD_L, largTopoMD_R)
-            print('MEDIA CENTRAL ALTURA TOPO/BASE')
-            print(alturaMD_Topo, alturaMD_Base)
 
-
+            print('='*50)
+            print('MEDIA CENTRAL')
+            print('='*50)
+            print(
+                f'''
+                    ({largTopoMD_L}, {alturaMD_Topo}),
+                    ({largBaseMD_L}, {alturaMD_Base}),
+                    ({largBaseMD_R}, {alturaMD_Base}),
+                    ({largTopoMD_R}, {alturaMD_Topo})
+                '''
+            )
 
             #Controle da Aila
             #Principal
@@ -542,14 +579,19 @@ def main():
             lane.roi_points[0][1] = alturaAilaTopo
             lane.roi_points[3][1] = alturaAilaTopo
 
+
+
             print('=' * 50)
             print('AILA BASE PRINCIPAL')
             print('=' * 50)
-            print(alturaAilaBase)
-            print('=' * 50)
-            print('AILA TOPO PRINCIPAL')
-            print('=' * 50)
-            print(alturaAilaAuxBase)
+            print(
+                f'''
+                    ({0}, {alturaAilaTopo}),
+                    ({0}, {alturaAilaBase}),
+                    ({640}, {alturaAilaBase}),
+                    ({640}, {alturaAilaTopo})
+                '''
+            )
 
             #Auxiliar
             lane.roi_pointsAux[1][1] = alturaAilaAuxBase
@@ -561,13 +603,18 @@ def main():
             print('=' * 50)
             print('AILA BASE AUXILIAR')
             print('=' * 50)
-            print(alturaAilaAuxBase)
-            print('=' * 50)
-            print('AILA TOPO AUXILIAR')
-            print('=' * 50)
-            print(alturaAilaAuxTopo)
+            print(
+                f'''
+                    ({0}, {alturaAilaAuxTopo}),
+                    ({0}, {alturaAilaAuxBase}),
+                    ({640}, {alturaAilaAuxBase}),
+                    ({640}, {alturaAilaAuxTopo})
+                '''
+            )
 
-            lane.get_line_markings(frame, plot=False)
+
+
+            lane.get_line_markings(frame, plot=getLine)
             lane.plot_roi(plotMD=True, plotAila=True)
             lane.perspective_transform(plot=False)
             lane.calculate_histogram(plot=False)

@@ -4,7 +4,7 @@ import cv2
 import Metodo_Aila as aila
 
 #Conectando com o Arduino
-conectar = serial.Serial("COM7", 9600)
+conectar = serial.Serial("COM5", 9600)
 
 #Abrindo a câmera
 cam = cv2.VideoCapture(0)
