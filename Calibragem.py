@@ -509,8 +509,6 @@ def main():
             ret, frame = vid.read()
             lane = Lane(orig_frame=frame)
 
-
-
             #SLIDER
             #ROI
             largBaseMD_L = 320 - cv2.getTrackbarPos('largBaseMD', 'Controle')
@@ -522,12 +520,13 @@ def main():
             alturaMD_Base = 480 - cv2.getTrackbarPos('altMD_Base', 'Controle')
             alturaMD_Topo = 480 - cv2.getTrackbarPos('altMD_Topo', 'Controle')
 
-            alturaAilaBase = 480 - cv2.getTrackbarPos('AilaBase', 'Controle')
             alturaAilaTopo = 480 - cv2.getTrackbarPos('AilaTopo', 'Controle')
+            alturaAilaBase = 480 - cv2.getTrackbarPos('AilaBase', 'Controle') + alturaAilaTopo
 
-            alturaAilaAuxBase = 480 - cv2.getTrackbarPos('AuxBase', 'Controle')
             alturaAilaAuxTopo = 480 - cv2.getTrackbarPos('AuxTopo', 'Controle')
+            alturaAilaAuxBase = 480 - cv2.getTrackbarPos('AuxBase', 'Controle') + alturaAilaAuxTopo
 
+            print(alturaAilaTopo)
             #THRESHOL
             lane.saturation = cv2.getTrackbarPos('saturation', 'Controle')
             lane.luminosity = cv2.getTrackbarPos('luminosity', 'Controle')
@@ -539,7 +538,6 @@ def main():
             print(f'Luminosity: {lane.luminosity}')
             print(f'Saturação: {lane.saturation}')
             print(f'Red: {lane.red}')
-
 
             #SWITCH
             getLine = cv2.getTrackbarPos('Lane Mark', 'Controle')
@@ -615,9 +613,9 @@ def main():
 
 
             lane.get_line_markings(frame, plot=getLine)
-            lane.plot_roi(plotMD=True, plotAila=True)
+            lane.plot_roi(plotMD=False, plotAila=False)
             lane.perspective_transform(plot=False)
-            lane.calculate_histogram(plot=False)
+            lane.calculate_histogram(plot=True)
             lane.get_lane_line_indices_sliding_windowns(plotAila=False)
             lane.plotMediaCentral(plot=False)
             lane.plotAila(plot=False)
