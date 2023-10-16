@@ -473,7 +473,7 @@ def nothing(x):
     pass
 
 def main():
-    vid = cv2.VideoCapture(0)
+    vid = cv2.VideoCapture(0, cv2.CAP_DSHOW)
     #Painel de Gerenciamento
     cv2.namedWindow('Controle')
     cv2.resizeWindow('Controle', 700,512)
@@ -615,10 +615,10 @@ def main():
             lane.get_line_markings(frame, plot=getLine)
             lane.plot_roi(plotMD=False, plotAila=False)
             lane.perspective_transform(plot=False)
-            lane.calculate_histogram(plot=True)
+            lane.calculate_histogram(plot=False)
             lane.get_lane_line_indices_sliding_windowns(plotAila=False)
-            lane.plotMediaCentral(plot=False)
-            lane.plotAila(plot=False)
+            lane.plotMediaCentral(plot=True)
+            lane.plotAila(plot=True)
             #print(lane.angulo(frame, multi=300))
             if (cv2.waitKey(1) & 0xFF == ord('q')):
                 break

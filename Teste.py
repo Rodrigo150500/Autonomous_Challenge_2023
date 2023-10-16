@@ -18,4 +18,7 @@ def main():
         if (cv2.waitKey(1) & 0xFF == ord('q')):
             break
 
-main()
+
+lista = ['vermelho', 'azul']
+
+print('zul' in lista)
