@@ -11,12 +11,31 @@ Servo servo;
 #define nada 10 // Branco
 
 unsigned long tempoAng;
-unsigned long tempoLed;
-int leds[50] = {4,5,6,7,8,9,10};
+
+unsigned long tempoPinVm;
+unsigned long tempoPinAm;
+unsigned long tempoPinVd;
+unsigned long tempoPedestre;
+unsigned long tempoPare;
+unsigned long tempoPessoa;
+
+bool acessoPinVm = true;
+bool acessoPinAm = true;
+bool acessoPinVd = true;
+bool acessoPedestre = true;
+bool acessoPare = true;
+bool acessoPessoa = true;
+
+
+
 int ultimoAngulo = 90;
 String itensLista[50];
 int indexItensLista;
 String objetos[50];
+
+
+
+
 void setup() {
   // put your setup code here, to run once:
   pinMode(pinVm, OUTPUT);
@@ -25,47 +44,136 @@ void setup() {
   pinMode(pedestre,OUTPUT);
   pinMode(pare, OUTPUT);
 
+
   servo.attach(pinServo);
   Serial.begin(9600);
   servo.write(90);
   tempoAng = millis();
-  tempoLed = millis();
   pinMode(13, OUTPUT);
 }
 
 void loop() {
-
+    //AndaPraFrente(motorSpeed);
   // put your main code here, to run repeatedly:7
     if (Serial.available()>0){
-    if (millis() > tempoAng + 50){
+    if (millis() > tempoAng + 20){
       //Lendo e separando os dados do serial
       String comando = readSerial();
       separar(comando);
-      
-
       //Controlando o servo
-      int angulo = itensLista[0].toInt();
       servo.write(angle(itensLista[0].toInt()));
 
       //Ação para fazer com a detecção de objetos
-      //Arrumar a ordem dos leds para a ordem dos objetos
-      for (int i = 1; i <= indexItensLista; i++) {
-        if(itensLista[i].toInt() == i-1){
-          digitalWrite(leds[i], HIGH);
-          if (millis() > tempoLed + 250){
-            digitalWrite(leds[i], LOW);
-            tempoLed = millis();
-          }
-
-  
+      for (int i = 1; i <= indexItensLista-1; i++) {
+        if(itensLista[i].toInt() == 0){ //Faixa de Pedestre
+            if(acessoPedestre == true){
+              digitalWrite(pedestre, HIGH);
+              delay(1000);
+              digitalWrite(pedestre,LOW);
+              acessoPedestre = false;
+              tempoPedestre = millis();
+            }
+            if(millis() > tempoPedestre + 5000){
+              acessoPedestre = true;
+              tempoPedestre = millis();
+            }
         }
+       if(itensLista[i].toInt() == 1){//Farol Amarelo
+          if(acessoPinAm == true){
+              digitalWrite(pinAm, HIGH);
+              delay(1000);
+              digitalWrite(pinAm,LOW);
+              acessoPinAm = false;
+              tempoPinAm = millis();
+            }
+            if(millis() > tempoPinAm + 5000){
+              acessoPinAm = true;
+              tempoPinAm = millis();
+            }
+        }
+        if(itensLista[i].toInt() == 2){//Farol Verde
+          if(acessoPinVd == true){
+              digitalWrite(pinVd, HIGH);
+              delay(1000);
+              digitalWrite(pinVd,LOW);
+              acessoPinVd = false;
+              tempoPinVd = millis();
+            }
+            if(millis() > tempoPinVd + 5000){
+              acessoPinVd = true;
+              tempoPinVd = millis();
+            }
+        }
+        if(itensLista[i].toInt() == 3){//Farol Vermelho
+          if(acessoPinVm == true){
+              digitalWrite(pinVm, HIGH);
+              delay(1000);
+              digitalWrite(pinVm,LOW);
+              acessoPinVm = false;
+              tempoPinVm = millis();
+            }
+            if(millis() > tempoPinVm + 5000){
+              acessoPinVm = true;
+              tempoPinVm = millis();
+            }
+        }
+         if(itensLista[i].toInt() == 4){ //Pare
+          if(acessoPare == true){
+              digitalWrite(pare, HIGH);
+              delay(1000);
+              digitalWrite(pare,LOW);
+              acessoPare = false;
+              tempoPare = millis();
+            }
+            if(millis() > tempoPare + 5000){
+              acessoPare = true;
+              tempoPare = millis();
+            }
+        }
+       /*if(itensLista[i].toInt() == 5){ //Pessoa
+          itensLista[50];
+          indexItensLista = 0;
 
+          while (acessoPessoa == true){
+            digitalWrite(pessoa, HIGH);
+            delay(1000);
+            String comam = readSerial();
+            separar(comam);
+            for (int m = 1; m <= indexItensLista-1; m++){
+              if(itensLista[m].toInt() == 5){
+                acessoPessoa = true;
+                break;
+              }else{
+                if(m == indexItensLista-1 && acessoPessoa == true && itensLista[i] != 5){
+                  acessoPessoa = false;
+              }
+              }
+              
+            } 
+          itensLista[50];
+          indexItensLista = 0;
+          }
+          digitalWrite(pessoa, LOW);
+          acessoPessoa = true;
+          String itensLista[50];
+          indexItensLista = 0;
+
+        }*/
+        
       }
       
       String itensLista[50];
       indexItensLista = 0;
       tempoAng = millis();
     }
+
+   
+    
+
+
+
+
+
   }
   
 
@@ -116,3 +224,4 @@ String readSerial(){
     return palavra;
  }
 
+ 

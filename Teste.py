@@ -17,8 +17,13 @@ def main():
                 print(result)
         if (cv2.waitKey(1) & 0xFF == ord('q')):
             break
+cap = cv2.VideoCapture(1, cv2.CAP_DSHOW)
 
+while True:
+    if cap.isOpened():
 
-lista = ['vermelho', 'azul']
+        ret, frame = cap.read()
 
-print('zul' in lista)
+        cv2.imshow('j', frame)
+        if (cv2.waitKey(1) & 0xFF == ord('q')):
+            break

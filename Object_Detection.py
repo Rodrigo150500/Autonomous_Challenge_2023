@@ -22,7 +22,7 @@ class Object_Detection:
         self.orig_frame = frame
 
     def main(self):
-        results = model.predict(self.orig_frame, show = True, conf = 0.8, stream=False)
+        results = model.predict(self.orig_frame, show = True, conf = 0.7, stream=False)
 
         if 'detection' not in results[0].verbose():
             res = ''
