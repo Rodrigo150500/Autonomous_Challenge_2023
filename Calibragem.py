@@ -613,12 +613,12 @@ def main():
 
 
             lane.get_line_markings(frame, plot=getLine)
-            lane.plot_roi(plotMD=False, plotAila=False)
+            lane.plot_roi(plotMD=True, plotAila=True)
             lane.perspective_transform(plot=False)
             lane.calculate_histogram(plot=False)
             lane.get_lane_line_indices_sliding_windowns(plotAila=False)
-            lane.plotMediaCentral(plot=True)
-            lane.plotAila(plot=True)
+            lane.plotMediaCentral(plot=False)
+            lane.plotAila(plot=False)
 
             #print(lane.angulo(frame, multi=300))
             if (cv2.waitKey(1) & 0xFF == ord('q')):

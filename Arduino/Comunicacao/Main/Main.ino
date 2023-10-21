@@ -119,6 +119,7 @@ void AndaPraTras(int motorSpeed) {
   analogWrite(FrenteDireita_LPWM_Output, motorSpeed);
   analogWrite(FrenteEsquerda_RPWM_Output, 0);
   analogWrite(FrenteEsquerda_LPWM_Output, motorSpeed);
+
   analogWrite(TraseiraDireita_RPWM_Output, 0);
   analogWrite(TraseiraDireita_LPWM_Output, motorSpeed);
   analogWrite(TraseiraEsquerda_RPWM_Output, 0);

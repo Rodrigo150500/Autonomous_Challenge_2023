@@ -4,11 +4,12 @@ import cv2
 import Metodo_Aila as aila
 import Object_Detection as od
 #Conectando com o Arduino
-#conectar = serial.Serial("COM5", 9600)
+conectar = serial.Serial("COM3", 9600)
 
 #Abrindo a câmera
-camAng = cv2.VideoCapture(0, cv2.CAP_DSHOW)
-camObj = cv2.VideoCapture(2, cv2.CAP_DSHOW)
+camAng = cv2.VideoCapture(1, cv2.CAP_DSHOW)
+camObj = cv2.VideoCapture(0, cv2.CAP_DSHOW)
+
 if camAng.isOpened():
     while True:
         #Capturando os frames
@@ -19,16 +20,16 @@ if camAng.isOpened():
         Aila = aila.Lane(frameAng)
         Obj = od.Object_Detection(frameObj)
 
-        anguloMD = Aila.angulo(frame=frameAng,multi=-300)
+        anguloMD = Aila.angulo(frame=frameAng, multi=300)
         objeto = Obj.main()
 
         #Concatenando os valores
 
         envio = f'[[{anguloMD},{objeto.strip()},]'
-       # conectar.write(envio.encode())
+        conectar.write(envio.encode())
         print(envio)
 
-        time.sleep(0.1)
+
         # {
         # 0: 'Faixa_de_Pedestre', branco
         # 1: 'Farol_Amarelo',
@@ -38,7 +39,7 @@ if camAng.isOpened():
         # 5: 'Pessoa' azul
         # 6: 'Nada' branco
         # }
-
+        time.sleep(0.1)
         #Fechando a câmera ao apertar q
         if (cv2.waitKey(1) & 0xFF == ord('q')):
             break
