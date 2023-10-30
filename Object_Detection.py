@@ -13,32 +13,57 @@ import cv2
 # }
 
 listaObjetos = ['Faixa_de_Pedestre','Farol_Amarelo','Farol_Verde','Farol_Vermelho','Pare','Pessoa']
-
+#Pare 220px largura
+#Semafaro 93px largura
 global model
-model = YOLO('../best.pt').to('cuda')
+model = YOLO('../objectDetection.pt').to('cuda')
 class Object_Detection:
     def __init__(self,frame):
 
         self.orig_frame = frame
 
     def main(self):
-        results = model.predict(self.orig_frame, show = True, conf = 0.7, stream=False)
-
+        #Aplicando o frame no treinamento
+        results = model.predict(self.orig_frame, show = True, conf = 0.4, stream=False)
+        #Condição para verificar se tem algo sendo detectado
         if 'detection' not in results[0].verbose():
+            lista = []
             res = ''
-            result = results[0].verbose().strip().split(',')[:-1]
-            for i in range (len(result)):
-                indice = result.index(result[i])
-                for j in range (len(listaObjetos)):
-                    if listaObjetos[j] in result[i]:
-                        result[indice] = str(j)
+            #Armazena os objetos detectados
+            result = results[0].verbose().strip().split(',')[:-1] #['2 Pessoas', '1 Pare']
+            #Armazena o indice dos objetos
+            for i in range(len(result)):
+                indice = result.index(result[i]) #Armazena a quantidade de objetos detectados 0:1 obj, 1:2 obj
 
-            for k in range (len(result)):
-                if k == len(result)-1:
-                    res += f'{result[k]}'
+                #Faz uma varredura na listaObjeto e compara se o objeto detectado consta na lista e armazena o indice do objeto
+                for j in range(len(listaObjetos)):
+                    for resultado in results:
+                        if ('Vermelho' in resultado[i].verbose()):
+                            largura = resultado.boxes.xywh[i][2].item()
+                            distancia = 100 / (largura / 85)
+                            if listaObjetos[j] in result[i] and distancia <= 300:
+                                lista.append((j)) #Armazena o indice do objeto detectado de acordo com o YOLO ['4','5']
+                        if ("Pare" in resultado[i].verbose()):
+                            largura = resultado.boxes.xywh[i][2].item()
+                            distancia = 100/(largura/220)
+                            if listaObjetos[j] in result[i] and distancia <= 300:
+                                lista.append((j)) #Armazena o indice do objeto detectado de acordo com o YOLO ['4','5']
+                        if("Pessoa" in resultado[i].verbose()):
+                            largura = resultado.boxes.xywh[i][2].item()
+                            distancia = 100/(largura/160)
+                            if listaObjetos[j] in result[i] and distancia <= 300:
+                                lista.append((j)) #Armazena o indice do objeto detectado de acordo com o YOLO ['4','5']
+
+
+
+            #Concatena os indices do yolo detectados, retira da lista e coloca tudo em uma unica string
+            for k in range(len(lista)):
+                if k == len(lista)-1:
+                    res += f'{lista[k]}'
                 else:
-                    res += f'{result[k]},'
+                    res += f'{lista[k]},'
             return res
+
         else:
             return '6'
 
@@ -49,8 +74,7 @@ def main():
     while True:
         ret, frame = cap.read()
 
-        Object_Detection(frame).main()
+        print(Object_Detection(frame).main())
 
         if (cv2.waitKey(1) & 0xFF == ord('q')):
             break
-

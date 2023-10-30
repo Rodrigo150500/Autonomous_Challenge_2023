@@ -5,26 +5,16 @@ import time
 def tirarFoto():
 
     # Inicializar a captura de vídeo
-    cap = cv2.VideoCapture(1)  # 0 representa a câmera padrão
+    cap = cv2.VideoCapture(0,cv2.CAP_DSHOW )  # 0 representa a câmera padrão
 
     # Verificar se a câmera foi aberta com sucesso
-    if not cap.isOpened():
-        print("Erro ao abrir a câmera.")
-        exit()
-
     # Capturar um quadro
     ret, frame = cap.read()
-    while True:
-        cv2.imshow("Janele", frame)
-        time.sleep(2)
-        cv2.imwrite("foto.jpg", frame)
+    time.sleep(2)
+    cv2.imshow("Janele", frame)
 
-        break
+    cv2.imwrite("foto.jpg", frame)
 
-
-    if not ret:
-        print("Não foi possível capturar o quadro.")
-        exit()
 
     # Salvar o quadro como uma imagem
 

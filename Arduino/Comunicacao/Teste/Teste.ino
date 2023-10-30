@@ -1,66 +1,59 @@
+//CONFIGURAÇÃO DO SERVO
 #include <Servo.h>
-
-//Declarando o servo
 Servo servo;
-#define pinServo 3
-
-//Setup dos motores
-int FrenteDireita_RPWM_Output = 3; // Arduino PWM output pin 3; connect to IBT-2 pin 1 (RPWM)
-int FrenteDireita_LPWM_Output = 4; // Arduino PWM output pin 4; connect to IBT-2 pin 2 (LPWM)
-int FrenteEsquerda_RPWM_Output = 5; // Arduino PWM output pin 5; connect to IBT-2 pin 1 (RPWM)
-int FrenteEsquerda_LPWM_Output = 6; // Arduino PWM output pin 6; connect to IBT-2 pin 2 (LPWM)
-int TraseiraDireita_RPWM_Output = 7; // Arduino PWM output pin 7; connect to IBT-2 pin 1 (RPWM)
-int TraseiraDireita_LPWM_Output = 8; // Arduino PWM output pin 8; connect to IBT-2 pin 2 (LPWM)
-int TraseiraEsquerda_RPWM_Output = 9; // Arduino PWM output pin 9; connect to IBT-2 pin 1 (RPWM)
-int TraseiraEsquerda_LPWM_Output = 10; // Arduino PWM output pin 10; connect to IBT-2 pin 2 (LPWM)
-
-//Velocidade dos motores
-int motorSpeed = 43;
-
-// Variaveis para o PID
-int Kp, Kd, Ki = 1;
-int integral = 0;
-int lastError = 0;
-
-//Variavel para iniciar o ultimo angulo;
+#define pinServo 2
 int ultimoAngulo = 90;
-int angulo;
+unsigned long tempoAng;
+String direcao;
 
-//Lista de objetos
 
-//Declarando o tempo millis()
-unsigned long tempo;
+//CONFIGURAÇÃO DOS OBJETOS
+//Variaveis para voltar a leitura dos objetos
+unsigned long tempoPinVm;
+unsigned long tempoPinAm;
+unsigned long tempoPinVd;
+unsigned long tempoPedestre;
+unsigned long tempoPare;
+unsigned long tempoPessoa;
 
-String palavra;
-String itensListas[50];
-String objetos[50];
-int indexItensListas = 0;
-int indexK = 0;
+//Variaveis para permitir a ação de parada
+bool acessoPinVm = true;
+bool acessoPinAm = true;
+bool acessoPinVd = true;
+bool acessoPedestre = true;
+bool acessoPare = true;
+bool acessoPessoa = true;
 
-bool n1, n3, n4 = false;
+//Variaveis para armazenar os dados e quantidade de itens dentro da itensLista
+String itensLista[50];
+int indexItensLista;
 
-void Stop() {
-  // Pare todos os motores
-  analogWrite(FrenteDireita_RPWM_Output, 0);
-  analogWrite(FrenteDireita_LPWM_Output, 0);
-  analogWrite(FrenteEsquerda_RPWM_Output, 0);
-  analogWrite(FrenteEsquerda_LPWM_Output, 0);
-  analogWrite(TraseiraDireita_RPWM_Output, 0);
-  analogWrite(TraseiraDireita_LPWM_Output, 0);
-  analogWrite(TraseiraEsquerda_RPWM_Output, 0);
-  analogWrite(TraseiraEsquerda_LPWM_Output, 0);
-}
-  
-//
+//CONFIGURAÇÃO DOS MOTORES
+//Setup dos motores
+int TraseiraEsquerdaTras = 3; 
+int TraseiraEsquerdaFrente = 4; 
+
+int TraseiraDireitaTras = 5;
+int TraseiraDireitaFrente = 6;
+
+int FrenteEsquerdaTras = 7;
+int FrenteEsquerdaFrente = 8;
+
+int FrenteDireitaTras = 9;
+int FrenteDireitaFrente = 10;
+
+
+
+
+int pinLed = 13;
+
+int motorSpeed = 50;
+
 void setup() {
   // put your setup code here, to run once:
-  servo.attach(pinServo);
-  Serial.begin(9600);
-  servo.write(90);
-
   //Iniciando os pinos dos motores
-  pinMode(FrenteDireita_RPWM_Output, OUTPUT);
-  pinMode(FrenteDireita_LPWM_Output, OUTPUT);
+  //pinMode(FrenteDireita_RPWM_Output, OUTPUT);
+  //pinMode(FrenteDireita_LPWM_Output, OUTPUT);
   pinMode(FrenteEsquerda_RPWM_Output, OUTPUT);
   pinMode(FrenteEsquerda_LPWM_Output, OUTPUT);
   pinMode(TraseiraDireita_RPWM_Output, OUTPUT);
@@ -68,158 +61,80 @@ void setup() {
   pinMode(TraseiraEsquerda_RPWM_Output, OUTPUT);
   pinMode(TraseiraEsquerda_LPWM_Output, OUTPUT);
 
+  pinMode(pinLed, OUTPUT);
+  servo.attach(pinServo);
+  Serial.begin(9600);
+  servo.write(90);
+
+  tempoAng = millis();
+  tempoPinVm = millis();
+  tempoPinAm = millis();
+  tempoPinVd = millis();
+  tempoPedestre = millis();
+  tempoPare = millis();
+  tempoPessoa = millis();
   pinMode(13, OUTPUT);
-  delay(2000);  
-  tempo = millis();
 }
 
-
-
-
-void loop() {
-  if (millis() > tempo+20){
-  if (Serial.available() > 0){
-    AndaPraFrente(motorSpeed);
-    //separar(readSerial());
-    Serial.println(readSerial());
-    angulo = itensListas[0].toInt();
-    //Armazenando apenas a lista de objetos
-    for (int k = 1; k<= indexItensListas+1;k++){
-      objetos[indexK] = itensListas[k];
-      indexK++;
-    }
-
-    //Movendo o servo
- 
-
-    //Condição para detecção de objetos
-    for (int item = 0; item<=indexK; item++){
-
-      if (objetos[item] == "1" && n1 == false ){
-        Stop();
-        delay(5000);
-        n1 = true;
-      }
-      if(objetos[item] == "3" && n3 == false){
-        Stop();
-        delay(5000);
-        n3 = true;
-      }
-      if(objetos[item] == "4" && n4 == false){
-
-        Stop();
-        delay(5000);
-        n4 = true;
-    }
-    }
-    indexK = 0;
-    String itensListas[50];
-    indexItensListas = 0;
-    tempo = millis();
-  }
-  }
-  
-
-}
-
-int readAngulo(){
-  if (Serial.available() > 0){
-      int angulo = Serial.parseInt();
-      if (angulo != ultimoAngulo){
-         if (angulo != 0){
-          ultimoAngulo = angulo + 90;
-          return ultimoAngulo;
-        }else{
-          return ultimoAngulo;
-        }
-      }
-
- }
- }
-
-String readSerial(){
-    String palavra = "";
-    while (Serial.available() > 0){
-      char c = Serial.read();
-      palavra += c;
-    }
-    return palavra;
- }
-
-void separar(String txt){
-  int ultimoCaracter = txt.length()-2;
-
-  if (txt[0] == '[' && txt[ultimoCaracter] == ']'){
-    String itens = txt.substring(1,ultimoCaracter);
-
-    String item;
-    for (int i = 0; i<= itens.length()-1;i++){
-        char c = itens[i];
-        if (itens[i] == ','){
-          itensListas[indexItensListas] = item;
-          item = "";
-          indexItensListas++;
-        } else{
-          item += itens[i];
-        }       
-    }
-
+void loop(){
+  analogWrite(9, 0); //TrasEsquerda
+  analogWrite(10, 35);
   }
 
-
-}
-
-
- int controlPID(int setpoint, int inputValue) {
-  // Calcule o erro (diferença entre o setpoint e o valor atual)
-  int error = setpoint - inputValue;
-  
-  // Calcule o termo proporcional
-  int P = Kp * error;
-  
-  // Calcule o termo integral
-  integral += error;
-  int I = Ki * integral;
-  
-  // Calcule o termo derivativo
-  int derivative = error - lastError;
-  int D = Kd * derivative;
-  
-  // Calcule a saída do controlador PID
-  int output = P + I + D;
-  
-  // Limite a saída dentro dos limites do servo
-  output = constrain(output, 0, 180);
-  
-  // Atualize o valor do erro anterior
-  lastError = error;
-  
-  return output;
-}
-
-
-void AndaPraTras(int motorSpeed) {
-  // Carro anda para trás (ré)
-  analogWrite(FrenteDireita_RPWM_Output, 0);
-  analogWrite(FrenteDireita_LPWM_Output, motorSpeed);
-  analogWrite(FrenteEsquerda_RPWM_Output, 0);
-  analogWrite(FrenteEsquerda_LPWM_Output, motorSpeed);
-  analogWrite(TraseiraDireita_RPWM_Output, 0);
-  analogWrite(TraseiraDireita_LPWM_Output, motorSpeed);
-  analogWrite(TraseiraEsquerda_RPWM_Output, 0);
-  analogWrite(TraseiraEsquerda_LPWM_Output, motorSpeed);
-}
 
 void AndaPraFrente(int motorSpeed) {
   // Carro anda para frente
-  analogWrite(FrenteDireita_RPWM_Output, motorSpeed);
-  analogWrite(FrenteDireita_LPWM_Output, 0);
-  analogWrite(FrenteEsquerda_RPWM_Output, motorSpeed);
+  //analogWrite(FrenteDireita_RPWM_Output, motorSpeed); //TrasEsquerda
+  //analogWrite(FrenteDireita_LPWM_Output, 0);
+
+  analogWrite(FrenteEsquerda_RPWM_Output, motorSpeed); //TrasDireita
   analogWrite(FrenteEsquerda_LPWM_Output, 0);
-  analogWrite(TraseiraDireita_RPWM_Output, motorSpeed);
+
+  analogWrite(TraseiraDireita_RPWM_Output, motorSpeed); //FrenteEsquerda
   analogWrite(TraseiraDireita_LPWM_Output, 0);
-  analogWrite(TraseiraEsquerda_RPWM_Output, motorSpeed);
+
+  analogWrite(TraseiraEsquerda_RPWM_Output, motorSpeed); //FrenteDireita
   analogWrite(TraseiraEsquerda_LPWM_Output, 0);
 }
 
+void Stop() {
+  // Pare todos os motores
+  //analogWrite(FrenteDireita_RPWM_Output, 0);
+  //analogWrite(FrenteDireita_LPWM_Output, 0);
+  analogWrite(FrenteEsquerda_RPWM_Output, 0);
+  analogWrite(FrenteEsquerda_LPWM_Output, 0);
+  analogWrite(TraseiraDireita_RPWM_Output, 0);
+  analogWrite(TraseiraDireita_LPWM_Output, 0);
+  analogWrite(TraseiraEsquerda_RPWM_Output, 0);
+  analogWrite(TraseiraEsquerda_LPWM_Output, 0);
+}
+ 
+//Aumenta a velocidade dos motores do lado direito em 50%
+void Direita(int motorSpeed){
+  //analogWrite(FrenteDireita_RPWM_Output, motorSpeed*1.5); //TrasEsquerda
+  //analogWrite(FrenteDireita_LPWM_Output, 0);
 
+  analogWrite(FrenteEsquerda_RPWM_Output, motorSpeed); //TrasDireita
+  analogWrite(FrenteEsquerda_LPWM_Output, 0);
+
+  analogWrite(TraseiraDireita_RPWM_Output, motorSpeed*1.5); //FrenteEsquerda
+  analogWrite(TraseiraDireita_LPWM_Output, 0);
+
+  analogWrite(TraseiraEsquerda_RPWM_Output, motorSpeed); //FrenteDireita
+  analogWrite(TraseiraEsquerda_LPWM_Output, 0);
+}
+
+//Aumenta a velocidade dos motores do lado Esquedo em 50%
+void Esquerda(int motorSpeed){
+  //analogWrite(FrenteDireita_RPWM_Output, motorSpeed); //TrasEsquerda
+  //analogWrite(FrenteDireita_LPWM_Output, 0);
+
+  analogWrite(FrenteEsquerda_RPWM_Output, motorSpeed*1.5); //TrasDireita
+  analogWrite(FrenteEsquerda_LPWM_Output, 0);
+
+  analogWrite(TraseiraDireita_RPWM_Output, motorSpeed); //FrenteEsquerda
+  analogWrite(TraseiraDireita_LPWM_Output, 0);
+
+  analogWrite(TraseiraEsquerda_RPWM_Output, motorSpeed*1.5); //FrenteDireita
+  analogWrite(TraseiraEsquerda_LPWM_Output, 0);
+}

@@ -1,0 +1,12 @@
+train: C:\Users\rodri\Documents\Autonomous_Challenge_2023\Autonomous Car dataset\train\images
+val: C:\Users\rodri\Documents\Autonomous_Challenge_2023\Autonomous Car dataset\valid\images
+
+nc: 6
+names: ['Faixa_de_Pedestre', 'Farol_Amarelo', 'Farol_Verde', 'Farol_Vermelho', 'Pare', 'Pessoa']
+
+roboflow:
+  workspace: fiap-wzxme
+  project: autonomous-car-m3fz5
+  version: 1
+  license: CC BY 4.0
+  url: https://universe.roboflow.com/fiap-wzxme/autonomous-car-m3fz5/dataset/1
